@@ -1,5 +1,6 @@
 package com.quranapp.android.compose.screens.settings
 
+import ThemeUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +23,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -58,6 +60,7 @@ import com.quranapp.android.utils.extensions.getDimenPx
 import com.quranapp.android.utils.managers.ResourceDownloadStatus
 import com.quranapp.android.utils.reader.QuranScriptUtils
 import com.quranapp.android.utils.reader.QuranScriptVariant
+import com.quranapp.android.utils.reader.getQuranScriptFontPackSizeMb
 import com.quranapp.android.utils.reader.getQuranScriptFontRes
 import com.quranapp.android.utils.reader.getQuranScriptName
 import com.quranapp.android.utils.reader.getQuranScriptVariantName
@@ -66,8 +69,8 @@ import com.quranapp.android.utils.reader.getScriptPreviewText
 import com.quranapp.android.utils.reader.isKFQPCScript
 import com.quranapp.android.viewModels.ScriptEvent
 import com.quranapp.android.viewModels.ScriptsViewModel
-import java.util.Locale
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @Composable
 fun ScriptsScreen() {
@@ -107,7 +110,10 @@ fun ScriptsScreen() {
                     variants = uiState.scripts.getOrDefault(script, emptyList()),
                     selectedScript = selectedScript,
                     selectedVariant = selectedVariant,
-                    downloadStates = uiState.downloadStates
+                    downloadStates = uiState.downloadStates,
+                    onCancelDownload = { key ->
+                        viewModel.onEvent(ScriptEvent.CancelDownload(key))
+                    }
                 ) { newScript, newVariant ->
                     if (script.isKFQPCScript()) {
                         val fontDownloadedCount =
@@ -142,13 +148,15 @@ private fun ScriptItem(
     selectedScript: String,
     selectedVariant: QuranScriptVariant?,
     downloadStates: Map<String, ResourceDownloadStatus>,
+    onCancelDownload: (String) -> Unit,
     onSelect: (String, QuranScriptVariant?) -> Unit,
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
+    val isDark = ThemeUtils.observeDarkTheme()
 
     val previewStyle = TextStyle(
-        fontFamily = FontFamily(Font(script.getQuranScriptFontRes())),
+        fontFamily = FontFamily(Font(script.getQuranScriptFontRes(isDark))),
         fontSize = with(density) {
             context.getDimenPx(script.getQuranScriptVerseTextSizeMediumRes()).toSp()
         }
@@ -221,23 +229,37 @@ private fun ScriptItem(
                     )
                 }
 
-                if (downloadState is ResourceDownloadStatus.InProgress) {
-                    Text(
-                        if (downloadState.progress <= 100)
-                            String.format(
-                                Locale.getDefault(),
-                                $$"%1$s (%2$d%%)",
-                                stringResource(R.string.msgDownloadingFonts),
-                                downloadState.progress
-                            )
-                        else stringResource(
-                            R.string.msgExtractingFonts
-                        ),
-                        style = typography.bodyMedium.copy(
-                            color = colorScheme.onSurface.alpha(0.75f),
-                            fontStyle = FontStyle.Italic
-                        ),
-                    )
+                if (isDownloading) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = when (downloadState) {
+                                is ResourceDownloadStatus.InProgress -> if (downloadState.progress <= 100) {
+                                    String.format(
+                                        Locale.getDefault(),
+                                        $$"%1$s (%2$d%%)",
+                                        stringResource(R.string.msgDownloadingFonts),
+                                        downloadState.progress
+                                    )
+                                } else {
+                                    stringResource(R.string.msgExtractingFonts)
+                                }
+
+                                else -> stringResource(R.string.textDownloading)
+                            },
+                            modifier = Modifier.weight(1f),
+                            style = typography.bodyMedium.copy(
+                                color = colorScheme.onSurface.alpha(0.75f),
+                                fontStyle = FontStyle.Italic
+                            ),
+                        )
+                        TextButton(onClick = { onCancelDownload(script) }) {
+                            Text(stringResource(R.string.strLabelCancel))
+                        }
+                    }
                 }
 
                 if (isSelected && variants.isNotEmpty()) {
@@ -288,17 +310,14 @@ private fun ScriptDownloadRequestAlert(
         if (info == null) return@AlertDialog
 
         val msg = StringBuilder(stringResource(R.string.msgDownloadKFQPCResources)).append("\n")
-        val downloadSize = if (info.first == QuranScriptUtils.SCRIPT_KFQPC_V1) {
-            45
-        } else {
-            115
-        }
+        val downloadSize = info.first.getQuranScriptFontPackSizeMb()
 
         if (info.second.remaining > 0) {
             msg.append("\n").append(
                 stringResource(
-                    R.string.msgDownloadKFQPCResourcesFonts,
-                    downloadSize
+                    R.string.msgDownloadFontsSize,
+                    downloadSize.first,
+                    downloadSize.second
                 )
             )
         }
