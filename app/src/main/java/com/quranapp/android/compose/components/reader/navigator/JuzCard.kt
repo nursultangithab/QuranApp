@@ -33,8 +33,9 @@ import androidx.compose.ui.unit.sp
 import com.quranapp.android.R
 import com.quranapp.android.compose.components.JuzIcon
 import com.quranapp.android.compose.theme.alpha
+import com.quranapp.android.compose.utils.LocalAppLocale
+import com.quranapp.android.compose.utils.formattedStringResource
 import com.quranapp.android.db.relations.NavigationUnit
-import java.util.Locale
 
 
 @Composable
@@ -45,6 +46,7 @@ fun JuzCard(
     isFavourite: Boolean = false,
     onToggleFavourite: (() -> Unit)? = null,
 ) {
+    val appLocale = LocalAppLocale.current
     val showFavouriteIcon = onToggleFavourite != null
     val firstSurah = juz.ranges.firstOrNull()
     val lastSurah = juz.ranges.lastOrNull()
@@ -83,7 +85,7 @@ fun JuzCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = juz.unitNo.toString(),
+                    text = String.format(appLocale.platformLocale, "%d", juz.unitNo),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Normal,
                     color = colorScheme.onSurface
@@ -95,9 +97,8 @@ fun JuzCard(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.strLabelJuzNo, juz.unitNo),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
+                    text = formattedStringResource(R.string.strLabelJuzNo, juz.unitNo),
+                    style = MaterialTheme.typography.titleSmall,
                     color = colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -105,7 +106,7 @@ fun JuzCard(
 
                 Text(
                     text = String.format(
-                        Locale.getDefault(),
+                        appLocale.platformLocale,
                         $$"%1$d:%2$d - %3$d:%4$d",
                         firstSurah?.surah?.surah?.surahNo ?: 0,
                         firstSurah?.startAyah ?: 0,

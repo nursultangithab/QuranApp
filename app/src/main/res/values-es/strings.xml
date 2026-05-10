@@ -220,7 +220,7 @@
     <string name="titleScriptCleanup">¿Borrar el script\?</string>
     <string name="msgScriptCleanup" formatted="false">El script %s y todas sus fuentes almacenadas serán eliminadas. Deberá volver a descargarlo para poder utilizarlas.</string>
     <string name="titleRecitationCleanup">¿Suprimir el recitado\?</string>
-    <string name="msgRecitationCleanup" formatted="false">Se borrarán todas las recitaciones almacenadas de %s.</string>
+    <string name="msgRecitationCleanup" formatted="false">Se borrarán todas las recitaciones almacenadas de %s. Para borrar recitaciones individualmente por sura, vaya a los ajustes.</string>
     <string name="nFiles" formatted="false">%d archivos</string>
     <string name="nScriptsAndFonts" formatted="false">%1$d scripts y %2$d fuentes</string>
     <string name="nothingToCleanup">No hay nada que limpiar.</string>
@@ -397,6 +397,7 @@
     <string name="playWord">Reproducir palabra</string>
     <string name="previousWord">Palabra anterior</string>
     <string name="nextWord">Palabra siguiente</string>
+    <string name="wbwSelectLanguage">Seleccionar idioma palabra por palabra</string>
     <string name="results">Resultados</string>
     <string name="titleRecentSearches">Búsquedas recientes</string>
     <string name="searchInQuran">Buscar en el Corán</string>
@@ -413,5 +414,31 @@
     <string name="discord">Discord</string>
     <string name="strTitleDownloadSunnahApp">Descargar SunnahApp</string>
     <string name="tajweedColors">Colores de Tajweed.</string>
-</resources>
+    <string name="similarVerses">Versículos similares</string>
+    <string name="noSimilarVerses">No hay versículos similares para este versículo.</string>
+    <string name="countSimilarVerses" formatted="false">%1$s tiene %2$d aleyas similares</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% de coincidencia · puntuación %2$d</string>
+    <string name="moreOptions">Más opciones</string>
+    <string name="whenChapterEnds">Cuando termine la sura</string>
+    <string name="whenChapterEndsDesc">Elige qué sucede después de que termine de reproducirse la sura actual.</string>
+    <string name="stopPlayback">Detener reproducción</string>
+    <string name="playNextSurah">Reproducir la siguiente sura</string>
+    <string name="repeatCurrentSurah">Repetir sura actual</string>
+    <string name="reset">Restablecer</string>
+    <string name="selectAll">Seleccionar todo</string>
+    <string name="filterTranslationsDisabledNote">No se busca en las traducciones mientras la búsqueda en árabe está activa.</string>
+    <string name="filterTranslationsEmpty">Aún no hay traducciones descargadas.</string>
 
+    <string name="wbwAudioTimingsCouldNotLoad">No se pudieron cargar los tiempos palabra por palabra. Revisa tu conexión e inténtalo de nuevo.</string>
+    <string name="wbwAudioCouldNotPlay">No se pudo reproducir el audio de la palabra.</string>
+    <string name="wbwAudioDownloadHint">Descarga el audio palabra por palabra para escuchar sin conexión y tener una reproducción más fluida.</string>
+    <string name="wbwAudio">Audio palabra por palabra</string>
+    <string name="wbwAudioDownloadAll">Descargar todo</string>
+    <string name="wbwAudioDownloadAllConfirm">¿Descargar el audio de recitación palabra por palabra de todas las suras? Esto puede consumir bastante almacenamiento y datos móviles.</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">Espera a que terminen las descargas de suras individuales antes de descargar todo.</string>
+    <string name="wbwAudioChapterWaitForBulk">Espera a que termine la descarga completa antes de descargar una sola sura.</string>
+    <string name="ontologyExplorer">Explorador de temas</string>
+    <string name="thematicTopics">Temas por categoría</string>
+    <string name="englishContentOnly">El contenido de esta página solo está disponible en inglés.</string>
+    <string name="estimatedSize">Tamaño estimado: %s</string>
+</resources>

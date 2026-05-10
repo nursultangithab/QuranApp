@@ -30,13 +30,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.quranapp.android.R
@@ -49,7 +49,8 @@ import com.quranapp.android.compose.components.dialogs.AlertDialogActionStyle
 import com.quranapp.android.compose.components.dialogs.SimpleTooltip
 import com.quranapp.android.compose.components.reader.ReaderMode
 import com.quranapp.android.compose.theme.alpha
-import com.quranapp.android.db.entities.ReadHistoryEntity
+import com.quranapp.android.compose.utils.formattedStringResource
+import com.quranapp.android.db.entities.user.ReadHistoryEntity
 import com.quranapp.android.utils.reader.ReadType
 import com.quranapp.android.utils.reader.factory.ReaderFactory
 import com.quranapp.android.utils.reader.getQuranScriptName
@@ -65,6 +66,8 @@ private sealed interface HistoryDeleteTarget {
 fun ReadHistoryScreen(vm: ReadHistoryViewModel = viewModel()) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    val chapterNames by vm.chapterNames.collectAsStateWithLifecycle()
     val allHistories = vm.allHistories.collectAsLazyPagingItems()
 
     var deleteTarget by remember { mutableStateOf<HistoryDeleteTarget?>(null) }
@@ -138,7 +141,7 @@ fun ReadHistoryScreen(vm: ReadHistoryViewModel = viewModel()) {
                         if (history != null) {
                             ReadHistoryCard(
                                 history = history,
-                                chapterName = history.chapterName.orEmpty(),
+                                chapterName = chapterNames.get(history.chapterNo).orEmpty(),
                                 onOpen = {
                                     ReaderFactory.prepareHistoryIntent(history)?.let {
                                         it.setClass(context, ActivityReader::class.java)
@@ -212,7 +215,7 @@ private fun ReadHistoryCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
@@ -309,7 +312,7 @@ private fun HistoryDeleteDialog(
 @Composable
 fun ReadHistoryEntity.titleLabel(chapterName: String): String {
     if (readerMode == ReaderMode.Reading.value || readerMode == ReaderMode.Translation.value) {
-        return pageNo?.let { stringResource(R.string.strLabelPageNo, pageNo) } ?: "-"
+        return pageNo?.let { formattedStringResource(R.string.strLabelPageNo, pageNo) } ?: "-"
     } else {
         return when (ReadType.fromValue(readType)) {
             ReadType.Chapter -> stringResource(
@@ -317,8 +320,8 @@ fun ReadHistoryEntity.titleLabel(chapterName: String): String {
                 chapterName
             )
 
-            ReadType.Juz -> stringResource(R.string.strLabelJuzNo, divisionNo)
-            ReadType.Hizb -> stringResource(R.string.labelHizbNo, divisionNo)
+            ReadType.Juz -> formattedStringResource(R.string.strLabelJuzNo, divisionNo)
+            ReadType.Hizb -> formattedStringResource(R.string.labelHizbNo, divisionNo)
         }
     }
 }
@@ -326,9 +329,9 @@ fun ReadHistoryEntity.titleLabel(chapterName: String): String {
 @Composable
 fun ReadHistoryEntity.subtitleLabel(chapterName: String): String? {
     val verseLabel = if (fromVerseNo == toVerseNo) {
-        stringResource(R.string.strLabelVerseNo, fromVerseNo)
+        formattedStringResource(R.string.strLabelVerseNo, fromVerseNo)
     } else {
-        stringResource(R.string.strLabelVerses, fromVerseNo, toVerseNo)
+        formattedStringResource(R.string.strLabelVerses, fromVerseNo, toVerseNo)
 
     }
     if (readerMode == ReaderMode.Reading.value || readerMode == ReaderMode.Translation.value) {

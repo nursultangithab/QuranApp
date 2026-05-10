@@ -215,7 +215,7 @@
     <string name="github">GitHub</string>
     <string name="msgVerseReminderNotifPermission">Günlük ayet hatırlatıcıyı etkinleştirmek için bildirim izni gerekiyor.</string>
     <string name="titleRecitationCleanup">Tilavet dosyası silinsin mi\?</string>
-    <string name="msgRecitationCleanup" formatted="false">%s\'e ait depolanmış tüm tilavet dosyaları silinecek.</string>
+    <string name="msgRecitationCleanup" formatted="false">%s\'e ait depolanmış tüm tilavet dosyaları silinecek. Tilavetleri sure bazında tek tek silmek için ayarlara gidin.</string>
     <string name="nothingToCleanup">Temizlenecek bir şey yok.</string>
     <string name="nItem">%d öğe</string>
     <string name="nItems">%d öğeler</string>
@@ -394,6 +394,7 @@
     <string name="playWord">Kelime oynat</string>
     <string name="previousWord">Önceki kelime</string>
     <string name="nextWord">Sonraki kelime</string>
+    <string name="wbwSelectLanguage">Kelime kelime dil seçin</string>
     <string name="results">Sonuçlar</string>
     <string name="titleRecentSearches">Son aramalar</string>
     <string name="searchInQuran">Kur\'an\'da ara</string>
@@ -410,5 +411,31 @@
     <string name="discord">Discord</string>
     <string name="strTitleDownloadSunnahApp">SunnahApp İndir</string>
     <string name="tajweedColors">Tecvid renkleri</string>
-</resources>
+    <string name="similarVerses">Benzer ayetler</string>
+    <string name="noSimilarVerses">Bu ayet için benzer ayet yok.</string>
+    <string name="countSimilarVerses" formatted="false">%1$s için %2$d benzer ayet var</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% eşleşme · skor %2$d</string>
+    <string name="moreOptions">Daha fazla seçenek</string>
+    <string name="whenChapterEnds">Sure bittiğinde</string>
+    <string name="whenChapterEndsDesc">Geçerli sure çalmayı bitirdikten sonra ne olacağını seçin.</string>
+    <string name="stopPlayback">Çalmayı durdur</string>
+    <string name="playNextSurah">Sonraki sureyi çal</string>
+    <string name="repeatCurrentSurah">Geçerli sureyi tekrarla</string>
+    <string name="reset">Sıfırla</string>
+    <string name="selectAll">Tümünü seç</string>
+    <string name="filterTranslationsDisabledNote">Arapça arama açıkken çevirilerde arama yapılmaz.</string>
+    <string name="filterTranslationsEmpty">Henüz indirilmiş çeviri yok.</string>
 
+    <string name="wbwAudioTimingsCouldNotLoad">Kelime zamanlamaları yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="wbwAudioCouldNotPlay">Kelime sesi oynatılamadı.</string>
+    <string name="wbwAudioDownloadHint">Çevrimdışı dinleme ve daha akıcı oynatma için kelime kelime sesi indirin.</string>
+    <string name="wbwAudio">Kelime kelime ses</string>
+    <string name="wbwAudioDownloadAll">Hepsini indir</string>
+    <string name="wbwAudioDownloadAllConfirm">Tüm sureler için kelime kelime tilavet sesini indirmek istiyor musunuz? Bu işlem önemli miktarda depolama ve mobil veri kullanabilir.</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">Hepsini indirmeden önce tek tek sure indirmelerinin bitmesini bekleyin.</string>
+    <string name="wbwAudioChapterWaitForBulk">Tek bir sure indirmeden önce toplu indirmenin tamamlanmasını bekleyin.</string>
+    <string name="ontologyExplorer">Konu Gezgini</string>
+    <string name="thematicTopics">Temaya göre konular</string>
+    <string name="englishContentOnly">Bu sayfadaki içerikler yalnızca İngilizce dilinde mevcuttur.</string>
+    <string name="estimatedSize">Tahmini boyut: %s</string>
+</resources>

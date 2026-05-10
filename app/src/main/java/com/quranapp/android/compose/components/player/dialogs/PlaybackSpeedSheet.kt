@@ -11,7 +11,7 @@ import com.quranapp.android.R
 import com.quranapp.android.compose.components.common.RadioItem
 import com.quranapp.android.compose.components.dialogs.BottomSheet
 import com.quranapp.android.utils.mediaplayer.RecitationController
-import com.quranapp.android.compose.utils.appLocale
+import com.quranapp.android.compose.utils.LocalAppLocale
 import com.quranapp.android.compose.utils.preferences.RecitationPreferences
 import kotlinx.coroutines.launch
 
@@ -21,6 +21,7 @@ fun PlaybackSpeedSheet(
     isOpen: Boolean,
     onClose: () -> Unit,
 ) {
+    val appLocale = LocalAppLocale.current
     val selectedSpeed = RecitationPreferences.observeSpeed()
     val coroutineScope = rememberCoroutineScope()
     val speedOptions = listOf(0.1f, 0.3f, 0.5f, 0.7f, 1f, 1.3f, 1.5f, 1.7f, 2f, 3f)
@@ -42,7 +43,7 @@ fun PlaybackSpeedSheet(
                 val speed = speedOptions[index]
 
                 RadioItem(
-                    titleStr = String.format(appLocale(), "%.1fx", speed),
+                    titleStr = String.format(appLocale.platformLocale, "%.1fx", speed),
                     selected = speed == selectedSpeed,
                     onClick = {
                         if (speed == selectedSpeed) return@RadioItem

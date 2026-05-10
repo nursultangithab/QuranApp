@@ -1,6 +1,5 @@
 package com.quranapp.android.utils.reader
 
-import ThemeUtils
 import android.content.Context
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Typography
@@ -26,16 +25,23 @@ import com.quranapp.android.compose.components.reader.TranslationPageItem
 import com.quranapp.android.compose.components.reader.TranslationPageSection
 import com.quranapp.android.compose.components.reader.TranslationPageVerse
 import com.quranapp.android.compose.theme.alpha
+import com.quranapp.android.compose.utils.ThemeUtils
 import com.quranapp.android.compose.utils.preferences.ReaderPreferences
 import com.quranapp.android.db.ChapterVerseBatch
+import com.quranapp.android.db.DatabaseProvider
+import com.quranapp.android.db.ExternalQuranDatabase
 import com.quranapp.android.db.entities.quran.AyahEntity
 import com.quranapp.android.db.entities.quran.AyahWordEntity
 import com.quranapp.android.db.entities.quran.MushafLineType
 import com.quranapp.android.db.entities.quran.MushafMapEntity
+import com.quranapp.android.db.entities.wbw.WbwWordEntity
 import com.quranapp.android.db.relations.SurahWithLocalizations
 import com.quranapp.android.db.relations.VerseWithDetails
 import com.quranapp.android.repository.QuranRepository
 import com.quranapp.android.utils.quran.QuranMeta
+import com.quranapp.android.utils.reader.atlas.AtlasGlyphPlacement
+import com.quranapp.android.utils.reader.atlas.QuranAtlasBundle
+import com.quranapp.android.utils.reader.atlas.QuranAtlasLoader
 import com.quranapp.android.utils.reader.factory.QuranTranslationFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -48,6 +54,11 @@ private data class SectionSnapshot(
     val ruku: Int,
     val rub: Int,
     val manzil: Int,
+)
+
+private data class ReaderVersesAtlasWbwLoad(
+    val atlasBundle: QuranAtlasBundle?,
+    val wbwByAyah: Map<Int, Map<Int, WbwWordEntity>>,
 )
 
 private data class TranslationVerseDraft(
@@ -112,20 +123,22 @@ private fun buildAnnotatedTranslationWithTranslatorLine(
 }
 
 object ReaderItemsBuilder {
-    suspend fun buildVersesForTranslationMode(
+    suspend fun buildChapterVersesForTranslationMode(
         context: Context,
         params: TextBuilderParams,
-        quranRepository: QuranRepository,
         chapterNo: Int,
     ): ReaderPreparedData? {
         if (!QuranMeta.isChapterValid(chapterNo)) {
             return null
         }
 
+        val quranRepository = DatabaseProvider.getQuranRepository(context)
+
         val verseCount = quranRepository.getChapterVerseCount(chapterNo)
         if (verseCount <= 0) return null
 
         val translationFactory = QuranTranslationFactory(context)
+        val externalQuranDb = DatabaseProvider.getExternalQuranDatabase(context)
 
         val out = ArrayList<ReaderLayoutItem>()
         val textStyles = HashMap<Int, TextStyle>()
@@ -143,6 +156,7 @@ object ReaderItemsBuilder {
                 textStyles,
                 it,
                 quranRepository,
+                externalQuranDb,
                 chapterNo,
                 1,
                 verseCount,
@@ -163,7 +177,7 @@ object ReaderItemsBuilder {
         }
 
         return buildGroupedVerses(
-            context, params, quranRepository,
+            context, params,
             quranRepository.getChapterVerseRangesInJuz(juzNo)
         )
     }
@@ -179,7 +193,7 @@ object ReaderItemsBuilder {
         }
 
         return buildGroupedVerses(
-            context, params, quranRepository,
+            context, params,
             quranRepository.getChapterVerseRangesInHizb(hizbNo)
         )
     }
@@ -187,12 +201,14 @@ object ReaderItemsBuilder {
     private suspend fun buildGroupedVerses(
         context: Context,
         params: TextBuilderParams,
-        quranRepository: QuranRepository,
         chapterRanges: List<Pair<Int, IntRange>>,
     ): ReaderPreparedData? {
         if (chapterRanges.isEmpty()) return null
 
+        val quranRepository = DatabaseProvider.getQuranRepository(context)
+        val externalQuranDb = DatabaseProvider.getExternalQuranDatabase(context)
         val translationFactory = QuranTranslationFactory(context)
+
         val out = ArrayList<ReaderLayoutItem>()
         val textStyles = HashMap<Int, TextStyle>()
 
@@ -212,8 +228,15 @@ object ReaderItemsBuilder {
                 }
 
                 buildReaderVerses(
-                    params, out, textStyles, it, quranRepository,
-                    chapterNo, verseRange.first, verseRange.last,
+                    params,
+                    out,
+                    textStyles,
+                    it,
+                    quranRepository,
+                    externalQuranDb,
+                    chapterNo,
+                    verseRange.first,
+                    verseRange.last,
                 )
             }
         }
@@ -227,23 +250,74 @@ object ReaderItemsBuilder {
         textStyles: MutableMap<Int, TextStyle>,
         factory: QuranTranslationFactory,
         quranRepository: QuranRepository,
+        externalQuranDb: ExternalQuranDatabase,
         chapterNo: Int,
         fromVerse: Int,
         toVerse: Int
     ) {
+        val uiConfig = params.uiConfig
+
         val wbwTranslationEnabled = ReaderPreferences.getWbwShowTranslation()
         val wbwTransliterationEnabled = ReaderPreferences.getWbwShowTransliteration()
         val wbwId = ReaderPreferences.getWbwId()
-        val isDarkThem = ThemeUtils.isDarkTheme(params.context)
+        val isDarkThem = ThemeUtils.isDarkTheme(uiConfig.context)
 
         val scriptCode = ReaderPreferences.getQuranScript()
         val mushafId = scriptCode.toQuranMushafId(ReaderPreferences.getQuranScriptVariant())
 
         val batch =
-            quranRepository.loadVersesBatch(chapterNo, fromVerse, toVerse + 1, scriptCode)
+            quranRepository.loadVersesBatch(
+                chapterNo,
+                fromVerse,
+                toVerse + 1,
+                scriptCode,
+                params.arabicEnabled
+            )
                 ?: return
 
         val surah = batch.surah
+
+        val isAtlasScript = scriptCode.isQuranAtlasScript()
+
+        val atlasWbw = coroutineScope {
+            val atlasDef = async(Dispatchers.IO) {
+                if (isAtlasScript) {
+                    val bundle = QuranAtlasLoader.getBundle(uiConfig.context, externalQuranDb, scriptCode)
+                    val atlasWordTexts =
+                        (fromVerse..toVerse).asSequence()
+                            .flatMap { vn -> batch.wordsByVerseNo[vn].orEmpty().asSequence() }
+                            .map { it.text }
+                            .toList()
+
+                    bundle?.prefetchShapes(atlasWordTexts)
+                    bundle
+                } else {
+                    null
+                }
+            }
+
+            val wbwDef = async(Dispatchers.IO) {
+                if (wbwId != null && (wbwTranslationEnabled || wbwTransliterationEnabled)) {
+                    val ids =
+                        (fromVerse..toVerse).mapNotNull { vn -> batch.ayahByVerseNo[vn]?.ayahId }
+                    if (ids.isEmpty()) emptyMap()
+                    else quranRepository.getWbwWordsForAyahs(
+                        wbwId = wbwId,
+                        ayahIds = ids,
+                        wbwTranslation = wbwTranslationEnabled,
+                        wbwTransliteration = wbwTransliterationEnabled,
+                    )
+                } else emptyMap()
+            }
+
+            ReaderVersesAtlasWbwLoad(
+                atlasBundle = atlasDef.await(),
+                wbwByAyah = wbwDef.await(),
+            )
+        }
+
+        val atlasBundle = atlasWbw.atlasBundle
+        val wbwByAyah = atlasWbw.wbwByAyah
 
         val booksInfo = factory.getTranslationBooksInfoValidated(params.slugs)
         val translationsByVerseIndex = factory.getTranslationsVerseRange(
@@ -257,10 +331,10 @@ object ReaderItemsBuilder {
             textStyles.getOrPut(pageNo) {
                 getQuranTextStyle(
                     QuranTextStyleParams(
-                        context = params.context,
+                        context = uiConfig.context,
                         fontResolver = params.fontResolver,
-                        colors = params.colors,
-                        type = params.type,
+                        colors = uiConfig.colors,
+                        type = uiConfig.type,
                         script = params.script,
                         pageNo = pageNo,
                         sizeMultiplier = params.arabicSizeMultiplier,
@@ -274,6 +348,7 @@ object ReaderItemsBuilder {
             val ts = getTranslationTextStyle(
                 TranslationTextStyleParams(
                     slug,
+                    uiConfig.type,
                     params.translationSizeMultiplier,
                 )
             )
@@ -281,22 +356,9 @@ object ReaderItemsBuilder {
         }
 
         val (labelMutedUrdu, labelMutedNonUrdu) = mutedTranslatorLabelStyles(
-            params.colors,
-            params.type
+            uiConfig.colors,
+            uiConfig.type
         )
-
-        val wbwByAyah =
-            if (wbwId != null && (wbwTranslationEnabled || wbwTransliterationEnabled)) {
-                val ids =
-                    (fromVerse..toVerse).mapNotNull { vn -> batch.ayahByVerseNo[vn]?.ayahId }
-                if (ids.isEmpty()) emptyMap()
-                else quranRepository.getWbwWordsForAyahs(
-                    wbwId = wbwId,
-                    ayahIds = ids,
-                    wbwTranslation = wbwTranslationEnabled,
-                    wbwTransliteration = wbwTransliterationEnabled,
-                )
-            } else emptyMap()
 
         var prevSection: SectionSnapshot? = null
 
@@ -315,12 +377,12 @@ object ReaderItemsBuilder {
                 manzil = ayah.manzilNo,
             )
 
-            out.addSectionMarker(params.context, chapterNo, verseNo, cur, prevSection)
+            out.addSectionMarker(uiConfig.context, chapterNo, verseNo, cur, prevSection)
             prevSection = cur
 
-            if (words.isEmpty()) continue
-
-            ensureQuranTextStyleForPage(pageNo)
+            if (words.isNotEmpty()) {
+                ensureQuranTextStyleForPage(pageNo)
+            }
 
             val verse = VerseWithDetails(
                 words = words,
@@ -331,7 +393,7 @@ object ReaderItemsBuilder {
                 this.translations = translations
             }
 
-            if (verse.isVOTD(params.context)) {
+            if (verse.isVOTD(uiConfig.context)) {
                 out.add(ReaderLayoutItem.IsVotd(key = "isVotd-$chapterNo:$verseNo"))
             }
 
@@ -346,7 +408,7 @@ object ReaderItemsBuilder {
                     buildAnnotatedTranslationWithTranslatorLine(
                         translation = translation,
                         verse = verse,
-                        colors = params.colors,
+                        colors = uiConfig.colors,
                         paragraphStyle = paragraphStyle,
                         translationSpanStyle = translationSpanStyle,
                         labelMutedUrdu = labelMutedUrdu,
@@ -360,6 +422,7 @@ object ReaderItemsBuilder {
             out.add(
                 ReaderLayoutItem.VerseUI(
                     verse = verse,
+                    atlasPlacements = atlasBundle?.getPlacementsForWords(words) ?: emptyMap(),
                     parsedTranslationTexts = parsedTranslationTexts,
                     wbwByWordIndex = wbwByAyah[verse.id]?.takeIf { it.isNotEmpty() },
                     showDivider = verseNo != toVerse,
@@ -369,7 +432,7 @@ object ReaderItemsBuilder {
         }
 
         out.addSectionMarkerAtRangeEnd(
-            params.context,
+            uiConfig.context,
             quranRepository,
             mushafId,
             chapterNo = chapterNo,
@@ -382,22 +445,39 @@ object ReaderItemsBuilder {
     suspend fun buildQuickReferenceItems(
         context: Context,
         params: TextBuilderParams,
-        repository: QuranRepository,
         chapterNo: Int,
         verseNos: List<Int>,
     ): ReaderPreparedData? {
+        val uiConfig = params.uiConfig
         val wbwTranslationEnabled = ReaderPreferences.getWbwShowTranslation()
         val wbwTransliterationEnabled = ReaderPreferences.getWbwShowTransliteration()
         val wbwId = ReaderPreferences.getWbwId()
         val scriptCode = ReaderPreferences.getQuranScript()
-        val isDarkThem = ThemeUtils.isDarkTheme(params.context)
+        val isDarkThem = ThemeUtils.isDarkTheme(uiConfig.context)
 
-        val batch = repository.loadArbitraryVersesBatch(chapterNo, verseNos, scriptCode)
+        val repository = DatabaseProvider.getQuranRepository(context)
+
+        val batch = repository.loadArbitraryVersesBatch(
+            chapterNo,
+            verseNos,
+            scriptCode,
+            params.arabicEnabled
+        )
             ?: return null
         val surah = batch.surah
 
         val translationFactory = QuranTranslationFactory(context)
+        val externalQuranDb = DatabaseProvider.getExternalQuranDatabase(context)
+
         val out = ArrayList<ReaderLayoutItem>(verseNos.size)
+
+        val atlasBundle = if (scriptCode.isQuranAtlasScript()) {
+            QuranAtlasLoader.getBundle(
+                context,
+                externalQuranDb,
+                scriptCode
+            )
+        } else null
 
         val textStyles = HashMap<Int, TextStyle>()
 
@@ -408,10 +488,10 @@ object ReaderItemsBuilder {
                 textStyles.getOrPut(pageNo) {
                     getQuranTextStyle(
                         QuranTextStyleParams(
-                            context = params.context,
+                            context = uiConfig.context,
                             fontResolver = params.fontResolver,
-                            colors = params.colors,
-                            type = params.type,
+                            colors = uiConfig.colors,
+                            type = uiConfig.type,
                             script = params.script,
                             pageNo = pageNo,
                             sizeMultiplier = params.arabicSizeMultiplier,
@@ -423,14 +503,18 @@ object ReaderItemsBuilder {
 
             val translationWrapStyles = booksInfo.keys.associateWith { slug ->
                 val ts = getTranslationTextStyle(
-                    TranslationTextStyleParams(slug, params.translationSizeMultiplier)
+                    TranslationTextStyleParams(
+                        slug,
+                        uiConfig.type,
+                        params.translationSizeMultiplier,
+                    )
                 )
                 ts.toParagraphStyle() to ts.toSpanStyle()
             }
 
             val (labelMutedUrdu, labelMutedNonUrdu) = mutedTranslatorLabelStyles(
-                params.colors,
-                params.type
+                uiConfig.colors,
+                uiConfig.type
             )
 
             val wbwByAyah =
@@ -445,17 +529,23 @@ object ReaderItemsBuilder {
                     )
                 } else emptyMap()
 
+            val translationsByVerseNo = loadQuickReferenceTranslationsByVerseNo(
+                factory = factory,
+                slugs = params.slugs,
+                chapterNo = chapterNo,
+                verseNos = verseNos,
+            )
+
             for ((idx, verseNo) in verseNos.withIndex()) {
                 val ayah = batch.ayahByVerseNo[verseNo] ?: continue
                 val words = batch.wordsByVerseNo[verseNo] ?: emptyList()
-                if (words.isEmpty()) continue
 
                 val pageNo = batch.pageByVerseNo[verseNo] ?: -1
-                ensureQuranTextStyleForPage(pageNo)
+                if (words.isNotEmpty()) {
+                    ensureQuranTextStyleForPage(pageNo)
+                }
 
-                val translations = factory.getTranslationsVerseRange(
-                    params.slugs, chapterNo, verseNo, verseNo
-                ).firstOrNull() ?: emptyList()
+                val translations = translationsByVerseNo[verseNo].orEmpty()
 
                 val verse = VerseWithDetails(
                     words = words,
@@ -477,7 +567,7 @@ object ReaderItemsBuilder {
                         buildAnnotatedTranslationWithTranslatorLine(
                             translation = translation,
                             verse = verse,
-                            colors = params.colors,
+                            colors = uiConfig.colors,
                             paragraphStyle = paragraphStyle,
                             translationSpanStyle = translationSpanStyle,
                             labelMutedUrdu = labelMutedUrdu,
@@ -491,6 +581,7 @@ object ReaderItemsBuilder {
                 out.add(
                     ReaderLayoutItem.VerseUI(
                         verse = verse,
+                        atlasPlacements = atlasBundle?.getPlacementsForWords(words) ?: emptyMap(),
                         parsedTranslationTexts = parsedTranslationTexts,
                         wbwByWordIndex = wbwByAyah[verse.id]?.takeIf { it.isNotEmpty() },
                         showDivider = idx != verseNos.lastIndex,
@@ -503,11 +594,53 @@ object ReaderItemsBuilder {
         return ReaderPreparedData(out, textStyles)
     }
 
+    private fun loadQuickReferenceTranslationsByVerseNo(
+        factory: QuranTranslationFactory,
+        slugs: Set<String>,
+        chapterNo: Int,
+        verseNos: List<Int>,
+    ): Map<Int, List<Translation>> {
+        if (verseNos.isEmpty() || slugs.isEmpty()) return emptyMap()
+
+        val uniqueSorted = verseNos.asSequence()
+            .filter { it > 0 }
+            .distinct()
+            .sorted()
+            .toList()
+
+        if (uniqueSorted.isEmpty()) return emptyMap()
+
+        val out = HashMap<Int, List<Translation>>(uniqueSorted.size)
+        var runStart = uniqueSorted.first()
+        var prev = runStart
+
+        fun flushRange(start: Int, end: Int) {
+            val grouped = factory.getTranslationsVerseRange(slugs, chapterNo, start, end)
+            for ((idx, verseNo) in (start..end).withIndex()) {
+                out[verseNo] = grouped.getOrNull(idx).orEmpty()
+            }
+        }
+
+        for (i in 1 until uniqueSorted.size) {
+            val verseNo = uniqueSorted[i]
+            if (verseNo == prev + 1) {
+                prev = verseNo
+                continue
+            }
+
+            flushRange(runStart, prev)
+            runStart = verseNo
+            prev = verseNo
+        }
+
+        flushRange(runStart, prev)
+        return out
+    }
+
     /**
      * Builds several mushaf pages: batched mushaf_map + juz queries, two-phase ayah word preload.
      */
     suspend fun buildMushafPages(
-        quranRepository: QuranRepository,
         fontResolver: FontResolver,
         pageNumbers: Collection<Int>,
         params: PageBuilderParams
@@ -515,8 +648,13 @@ object ReaderItemsBuilder {
         val distinct = pageNumbers.filter { it > 0 }.distinct().sorted()
         if (distinct.isEmpty()) return emptyMap()
 
+        val uiConfig = params.uiConfig
+
         val scriptCode = ReaderPreferences.getQuranScript()
         val mushafId = scriptCode.toQuranMushafId(ReaderPreferences.getQuranScriptVariant())
+
+        val quranRepository = DatabaseProvider.getQuranRepository(uiConfig.context)
+        val externalQuranDb = DatabaseProvider.getExternalQuranDatabase(uiConfig.context)
 
         val linesByPage = quranRepository.getPageLinesGroupedForPages(mushafId, distinct)
         val juzByPage = quranRepository.getJuzForMushafPages(mushafId, distinct)
@@ -528,6 +666,20 @@ object ReaderItemsBuilder {
         val wordCacheFull = quranRepository.preloadMushafLineWordCache(ayahRows, scriptCode)
         val wordCache = wordCacheFull.takeIf { it.isNotEmpty() }
 
+        val atlasBundle = if (scriptCode.isQuranAtlasScript()) {
+            QuranAtlasLoader.getBundle(
+                uiConfig.context,
+                externalQuranDb,
+                scriptCode
+            )
+        } else null
+
+        val textMeasurer = QuranTextMeasurer(
+            atlasBundle,
+            uiConfig.textMeasurer,
+            uiConfig.density
+        )
+
         val out = LinkedHashMap<Int, QuranPageItem>(distinct.size)
         for (pageNo in distinct) {
             val rows = linesByPage[pageNo].orEmpty()
@@ -535,10 +687,10 @@ object ReaderItemsBuilder {
 
             val baseStyle = getQuranTextStyle(
                 QuranTextStyleParams(
-                    context = params.context,
+                    context = uiConfig.context,
                     fontResolver = fontResolver,
-                    colors = params.colors,
-                    type = params.type,
+                    colors = uiConfig.colors,
+                    type = uiConfig.type,
                     pageNo = pageNo,
                     script = scriptCode,
                     sizeMultiplier = 1f,
@@ -546,24 +698,33 @@ object ReaderItemsBuilder {
                 )
             )
 
-            val contentWidthDp = with(params.density) { params.contentWidthPx.toDp().value }
+            val contentWidthDp = with(uiConfig.density) { params.contentWidthPx.toDp().value }
             val ayahWordsByLineNo = LinkedHashMap<Int, List<AyahWordEntity>>()
+            val atlasPlacementsByLineNo = LinkedHashMap<Int, Map<Int, List<AtlasGlyphPlacement>>>()
+
             for (row in rows) {
                 if (row.lineType != MushafLineType.ayah) continue
-                ayahWordsByLineNo[row.lineNumber] = quranRepository.resolveMushafLineWords(
-                    row,
-                    scriptCode,
-                    wordCache
-                )
+
+                val lineWords =
+                    quranRepository.resolveMushafLineWords(row, scriptCode, wordCache).map { it }
+
+                ayahWordsByLineNo[row.lineNumber] = lineWords
+
+                atlasBundle?.let {
+                    atlasPlacementsByLineNo[row.lineNumber] =
+                        it.getPlacementsForWords(lineWords)
+                }
             }
 
-            val pageScale = computeMushafPageScale(
+            val pageScale = textMeasurer.computeMushafPageScale(
                 rows = rows,
                 wordsByLineNo = ayahWordsByLineNo,
+                atlasPlacements = atlasPlacementsByLineNo,
                 baseStyle = baseStyle,
                 params = params,
                 fallbackScale = mushafScaleForWidth(contentWidthDp),
             )
+
             val cappedBaseStyle = mushafCappedBaseStyleForScale(baseStyle, pageScale)
 
             for (row in rows) {
@@ -573,8 +734,9 @@ object ReaderItemsBuilder {
                     scriptCode,
                     cappedBaseStyle,
                     params,
-                    wordCache,
-                    ayahWordsByLineNo[row.lineNumber],
+                    ayahWordsByLineNo[row.lineNumber] ?: emptyList(),
+                    atlasPlacementsByLineNo[row.lineNumber] ?: emptyMap(),
+                    textMeasurer = textMeasurer,
                 )?.let {
                     lines.add(it)
                 }
@@ -643,10 +805,11 @@ object ReaderItemsBuilder {
 
             val ts = getTranslationTextStyle(
                 TranslationTextStyleParams(
-                    translationSlug,
-                    params.translationSizeMultiplier,
+                    slug = translationSlug,
+                    sizeMultiplier = params.translationSizeMultiplier,
+                    type = params.type,
+                    baselineHeightMultiplier = 1.75f
                 ),
-                baseLineHeightMultiplier = 1.75f
             )
 
             val translationSpanStyle = ts.toSpanStyle()
@@ -918,8 +1081,9 @@ object ReaderItemsBuilder {
         scriptCode: String,
         cappedBaseStyle: TextStyle,
         params: PageBuilderParams,
-        wordCache: Map<Int, List<AyahWordEntity>>?,
-        resolvedWords: List<AyahWordEntity>?,
+        resolvedWords: List<AyahWordEntity>,
+        atlasPlacements: Map<Int, List<AtlasGlyphPlacement>>,
+        textMeasurer: QuranTextMeasurer,
     ): QuranPageLineItem? {
         return when (row.lineType) {
             MushafLineType.surah_name -> {
@@ -930,77 +1094,27 @@ object ReaderItemsBuilder {
             MushafLineType.basmallah -> QuranPageLineItem.Bismillah(row.lineNumber)
 
             MushafLineType.ayah -> {
-                val words = resolvedWords
-                    ?: quranRepository.resolveMushafLineWords(row, scriptCode, wordCache)
-
-                val layout = fitMushafLineLayout(
-                    words = words,
+                val layout = textMeasurer.fitMushafLineLayout(
+                    words = resolvedWords,
+                    atlasPlacements = atlasPlacements,
                     centered = row.isCentered,
                     cappedBaseStyle = cappedBaseStyle,
                     maxLineWidthPx = params.contentWidthPx.toFloat(),
                     lineWidthBounded = true,
-                    density = params.density,
-                    textMeasurer = params.textMeasurer,
+                    density = params.uiConfig.density,
                 )
 
                 QuranPageLineItem.Text(
                     lineNo = row.lineNumber,
                     centered = row.isCentered,
-                    words = words,
+                    words = resolvedWords,
+                    atlasPlacements = atlasPlacements,
                     layout = layout
                 )
             }
         }
     }
 
-    private fun computeMushafPageScale(
-        rows: List<MushafMapEntity>,
-        wordsByLineNo: Map<Int, List<AyahWordEntity>>,
-        baseStyle: TextStyle,
-        params: PageBuilderParams,
-        fallbackScale: Float,
-    ): Float {
-        val contentWidthPx = params.contentWidthPx.toFloat().coerceAtLeast(1f)
-        val centeredGapPx =
-            with(params.density) { baseStyle.fontSize.toPx() * MUSHAF_CENTERED_GAP_FRACTION }
-        val minInterWordGapPx =
-            with(params.density) { baseStyle.fontSize.toPx() * MUSHAF_MIN_INTER_WORD_GAP_FRACTION }
-
-        val wideLineRatios = ArrayList<Float>(rows.size)
-        for (row in rows) {
-            if (row.lineType != MushafLineType.ayah) continue
-            val words = wordsByLineNo[row.lineNumber].orEmpty()
-            if (words.isEmpty()) continue
-
-            val measuredWidth = measureMushafLineWidthForStyle(
-                words = words,
-                centered = row.isCentered,
-                textMeasurer = params.textMeasurer,
-                style = baseStyle,
-                centeredGapPx = centeredGapPx,
-                minInterWordGapPx = minInterWordGapPx,
-            ).coerceAtLeast(1f)
-
-            val fillRatio = measuredWidth / contentWidthPx
-
-            if (!row.isCentered && fillRatio >= 0.82f) {
-                wideLineRatios.add((contentWidthPx / measuredWidth).coerceAtLeast(0f))
-            }
-        }
-
-        if (wideLineRatios.isEmpty()) return fallbackScale
-
-        val sorted = wideLineRatios.sorted()
-        val middle = sorted.size / 2
-        val median = if (sorted.size % 2 == 0) {
-            (sorted[middle - 1] + sorted[middle]) / 2f
-        } else {
-            sorted[middle]
-        }
-
-        val conservativeCap = minOf(fallbackScale, MUSHAF_FONT_SCALE_AT_MAX_WIDTH)
-        return median.coerceIn(MUSHAF_FONT_SCALE_AT_MIN_WIDTH, conservativeCap)
-    }
 
     private fun ArrayList<ReaderLayoutItem>.addSectionMarker(
         context: Context,

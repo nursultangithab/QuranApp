@@ -12,18 +12,24 @@ import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.alfaazplus.sunnah.ui.utils.shared_preference.DataStoreManager
 import com.alfaazplus.sunnah.ui.utils.shared_preference.PrefKey
 import com.quranapp.android.compose.components.reader.ReaderMode
+import com.quranapp.android.db.DatabaseProvider
 import com.quranapp.android.utils.reader.QuranScriptUtils
 import com.quranapp.android.utils.reader.QuranScriptVariant
 import com.quranapp.android.utils.reader.ReaderTextSizeUtils
 import com.quranapp.android.utils.reader.TranslUtils
+import com.quranapp.android.utils.reader.factory.QuranTranslationFactory
+import com.quranapp.android.utils.reader.isKFQPCScript
+import com.quranapp.android.utils.reader.isQuranAtlasScript
 import com.quranapp.android.utils.reader.tafsir.TafsirManager
 import com.quranapp.android.utils.tafsir.TafsirUtils
 import com.quranapp.android.utils.univ.Keys
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 object ReaderPreferences {
 
@@ -179,6 +185,77 @@ object ReaderPreferences {
             }
 
             DataStoreManager.write(KEY_LEGACY_MIGRATED, true)
+        }
+    }
+
+    fun repairStoredPreferencesIfNeeded(context: Context) {
+        runBlocking {
+            withContext(Dispatchers.IO) {
+                val appCtx = context.applicationContext
+                val storedScript = DataStoreManager.read(KEY_SCRIPT)
+                val storedVariant = DataStoreManager.read(KEY_SCRIPT_VARIANT)
+                val storedTranslations = DataStoreManager.read(KEY_TRANSLATIONS)
+
+                var working = QuranScriptUtils.validatePreferredScript(storedScript)
+
+                if (working.isKFQPCScript()) {
+                    if (QuranScriptUtils.getKFQPCFontDownloadedCount(
+                            appCtx,
+                            working
+                        ).remaining > 0
+                    ) {
+                        working = QuranScriptUtils.SCRIPT_DEFAULT
+                    }
+                }
+
+                if (working.isQuranAtlasScript()) {
+                    val installed = DatabaseProvider.getExternalQuranDatabase(appCtx)
+                        .atlasWordShapeDao()
+                        .getBundleByKey(working) != null
+
+                    if (!installed) {
+                        working = QuranScriptUtils.SCRIPT_DEFAULT
+                    }
+                }
+
+                val allowedVariants =
+                    QuranScriptUtils.availableScripts()[working].orEmpty()
+
+                val parsedVariant = QuranScriptVariant.fromValue(storedVariant)
+
+                val targetVariant = when {
+                    parsedVariant != null && parsedVariant in allowedVariants -> storedVariant
+                    else -> ""
+                }
+
+                val availableTranslationSlugs = QuranTranslationFactory(appCtx).use { factory ->
+                    factory.getAvailableTranslationBooksInfo().keys
+                }
+                val repairedTranslations = storedTranslations.filterTo(hashSetOf()) {
+                    it in availableTranslationSlugs
+                }.ifEmpty {
+                    TranslUtils.defaultTranslationSlugs()
+                }
+
+                if (working != storedScript ||
+                    targetVariant != storedVariant ||
+                    repairedTranslations != storedTranslations
+                ) {
+                    DataStoreManager.edit {
+                        if (working != storedScript) {
+                            this[KEY_SCRIPT.key] = working
+                        }
+
+                        if (targetVariant != storedVariant) {
+                            this[KEY_SCRIPT_VARIANT.key] = targetVariant
+                        }
+
+                        if (repairedTranslations != storedTranslations) {
+                            this[KEY_TRANSLATIONS.key] = repairedTranslations
+                        }
+                    }
+                }
+            }
         }
     }
 

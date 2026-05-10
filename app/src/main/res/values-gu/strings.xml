@@ -167,7 +167,7 @@
     <string name="recitationCanBeFreedUp" formatted="false">%2$d વાચકોની %1$d સંગ્રહિત પઠન ફાઇલો ખાલી કરી શકાય છે.</string>
     <string name="scriptCanBeFreedUp" formatted="false">%d ડાઉનલોડ કરેલ સ્ક્રિપ્ટો અને તેમના ફોન્ટ્સ મુક્ત કરી શકાય છે.</string>
     <string name="tafseerCanBeFreedUp" formatted="false">%d સાચવેલી તફસીરો સાફ કરી શકાય છે.</string>
-    <string name="msgRecitationCleanup" formatted="false">%s ના બધા સંગ્રહિત પઠન કાઢી નાખવામાં આવશે.</string>
+    <string name="msgRecitationCleanup" formatted="false">%s ના બધા સંગ્રહિત પઠન કાઢી નાખવામાં આવશે. સુરાહ દ્વારા વ્યક્તિગત રીતે પઠન કાઢી નાખવા માટે, સેટિંગ્સમાં જાઓ.</string>
     <string name="strTitleReaderTextSizeArabic">અરબી ટેક્સ્ટનું કદ</string>
     <string name="strTitleReaderTextSizeTransl">અનુવાદ ટેક્સ્ટનું કદ</string>
     <string name="titleReaderTextSizeTafsir">તફસીર ટેક્સ્ટનું કદ</string>
@@ -397,6 +397,7 @@
     <string name="playWord">શબ્દ વગાડો</string>
     <string name="previousWord">અગાઉનો શબ્દ</string>
     <string name="nextWord">આગલો શબ્દ</string>
+    <string name="wbwSelectLanguage">શબ્દદર શબ્દ ભાષા પસંદ કરો</string>
     <string name="results">પરિણામો</string>
     <string name="titleRecentSearches">તાજેતરની શોધો</string>
     <string name="searchInQuran">કુરાનમાં શોધો</string>
@@ -413,5 +414,31 @@
     <string name="discord">ડિસ્કોર્ડ</string>
     <string name="strTitleDownloadSunnahApp">SunnahApp ડાઉનલોડ કરો</string>
     <string name="tajweedColors">તાજવીદના રંગો</string>
-</resources>
+    <string name="similarVerses">સમાન આયતો</string>
+    <string name="noSimilarVerses">આ આયત માટે કોઈ સમાન આયત નથી.</string>
+    <string name="countSimilarVerses" formatted="false">%1$s માં %2$d સમાન આયતો છે</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% મેળ · સ્કોર %2$d</string>
+    <string name="moreOptions">વધુ વિકલ્પો</string>
+    <string name="whenChapterEnds">જ્યારે સૂરા પૂર્ણ થાય</string>
+    <string name="whenChapterEndsDesc">હાલની સૂરા પૂર્ણ થયા પછી શું થવું જોઈએ તે પસંદ કરો.</string>
+    <string name="stopPlayback">પ્લેબેક બંધ કરો</string>
+    <string name="playNextSurah">આગલી સૂરા ચલાવો</string>
+    <string name="repeatCurrentSurah">હાલની સૂરા પુનરાવર્તિત કરો</string>
+    <string name="reset">રીસેટ કરો</string>
+    <string name="selectAll">બધું પસંદ કરો</string>
+    <string name="filterTranslationsDisabledNote">અરબી શોધ ચાલુ હોય ત્યાં સુધી અનુવાદોમાં શોધ થતી નથી.</string>
+    <string name="filterTranslationsEmpty">હજુ સુધી કોઈ અનુવાદ ડાઉનલોડ થયું નથી.</string>
 
+    <string name="wbwAudioTimingsCouldNotLoad">શબ્દોના સમયચિહ્નો લોડ થઈ શક્યા નથી. કનેક્શન તપાસો અને ફરી પ્રયાસ કરો.</string>
+    <string name="wbwAudioCouldNotPlay">શબ્દનો ઓડિયો ચલાવી શકાયો નથી.</string>
+    <string name="wbwAudioDownloadHint">ઓફલાઇન સાંભળવા અને વધુ સ્મૂથ પ્લેબેક માટે શબ્દ-દર-શબ્દ ઓડિયો ડાઉનલોડ કરો.</string>
+    <string name="wbwAudio">શબ્દ-દર-શબ્દ ઓડિયો</string>
+    <string name="wbwAudioDownloadAll">બધું ડાઉનલોડ કરો</string>
+    <string name="wbwAudioDownloadAllConfirm">બધી સૂરાઓ માટે શબ્દ-દર-શબ્દ તિલાવત ઓડિયો ડાઉનલોડ કરશો? તે વધુ સ્ટોરેજ અને મોબાઇલ ડેટા વાપરી શકે છે.</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">બધું ડાઉનલોડ કરતા પહેલાં અલગ સૂરાઓના ડાઉનલોડ પૂર્ણ થવા દો.</string>
+    <string name="wbwAudioChapterWaitForBulk">એક જ સૂરા ડાઉનલોડ કરતા પહેલાં સંપૂર્ણ ડાઉનલોડ પૂર્ણ થવાની રાહ જુઓ.</string>
+    <string name="ontologyExplorer">વિષય એક્સપ્લોરર</string>
+    <string name="thematicTopics">થીમ મુજબ વિષયો</string>
+    <string name="englishContentOnly">આ પેજનું સામગ્રી માત્ર અંગ્રેજી ભાષામાં ઉપલબ્ધ છે.</string>
+    <string name="estimatedSize">અંદાજિત કદ: %s</string>
+</resources>

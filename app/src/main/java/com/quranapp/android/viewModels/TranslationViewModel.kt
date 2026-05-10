@@ -9,11 +9,10 @@ import com.quranapp.android.components.transls.TranslModel
 import com.quranapp.android.components.transls.TranslationGroupModel
 import com.quranapp.android.compose.utils.DataLoadError
 import com.quranapp.android.compose.utils.preferences.ReaderPreferences
-import com.quranapp.android.utils.reader.TranslUtils
 import com.quranapp.android.search.SearchIndexScheduler
+import com.quranapp.android.utils.reader.TranslUtils
 import com.quranapp.android.utils.reader.factory.QuranTranslationFactory
 import com.quranapp.android.utils.univ.FileUtils
-import com.quranapp.android.views.reader.updateAllVotdWidgets
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +32,7 @@ data class TranslationUiState(
 
 sealed interface TranslationEvent {
     object Refresh : TranslationEvent
+    object RefreshQuiet : TranslationEvent
     data class Initialize(
         val initialSlugs: Set<String>,
         val saveTranslationChanges: Boolean
@@ -62,6 +62,7 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     fun onEvent(event: TranslationEvent) {
         when (event) {
             is TranslationEvent.Refresh -> loadTranslations()
+            is TranslationEvent.RefreshQuiet -> loadTranslations(silent = true)
             is TranslationEvent.Initialize -> _uiState.update {
                 it.copy(
                     selectedSlugs = event.initialSlugs,
@@ -110,8 +111,6 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
             viewModelScope.launch {
                 ReaderPreferences.setTranslations(newSlugs)
             }
-            
-            updateAllVotdWidgets(context)
         }
 
         if (succeed) {
@@ -134,6 +133,11 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     private fun deleteTranslation(slug: String) {
+        if (TranslUtils.isPrebuilt(slug)) {
+            return
+        }
+
+        var updatedSelectedSlugs: Set<String> = emptySet()
         QuranTranslationFactory(application).use {
             it.deleteTranslation(slug)
             SearchIndexScheduler.enqueueRemoveSlug(application.applicationContext, slug)
@@ -147,11 +151,16 @@ class TranslationViewModel(application: Application) : AndroidViewModel(applicat
                     )
                 }.filterNot { it.translations.isEmpty() }
 
+                updatedSelectedSlugs = current.selectedSlugs - slug
                 current.copy(
                     translationGroups = updatedGroups,
-                    selectedSlugs = current.selectedSlugs - slug
+                    selectedSlugs = updatedSelectedSlugs
                 )
             }
+        }
+
+        viewModelScope.launch {
+            ReaderPreferences.setTranslations(updatedSelectedSlugs)
         }
     }
 

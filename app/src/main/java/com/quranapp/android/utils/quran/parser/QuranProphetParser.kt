@@ -4,7 +4,7 @@ import android.content.Context
 import com.quranapp.android.R
 import com.quranapp.android.components.quran.QuranProphet
 import com.quranapp.android.components.quran.QuranProphet.Prophet
-import com.quranapp.android.compose.utils.appLocale
+import com.quranapp.android.compose.utils.appPlatformLocale
 import com.quranapp.android.db.DatabaseProvider
 import com.quranapp.android.utils.quran.parser.ParserUtils.prepareChapterText
 import com.quranapp.android.utils.quran.parser.ParserUtils.prepareChaptersList
@@ -29,12 +29,13 @@ object QuranProphetParser {
     private const val PROPHETS_ATTR_NAME_EN = "name-en"
     private const val PROPHETS_ATTR_NAME = "name"
     private const val PROPHETS_ATTR_ICON_RES = "drawable"
+    private const val PROPHETS_ATTR_THUMBNAIL = "thumbnail"
 
     /**
-     * Parsed strings and chapter labels depend on [appLocale]. Cached per locale tag.
+     * Parsed strings and chapter labels depend on [appPlatformLocale]. Cached per locale tag.
      */
     suspend fun parseProphets(context: Context): QuranProphet {
-        val localeTag = appLocale().toLanguageTag()
+        val localeTag = appPlatformLocale().toLanguageTag()
         synchronized(cacheLock) {
             cached?.takeIf { it.localeTag == localeTag }?.let {
                 return it.quranProphet
@@ -85,6 +86,9 @@ object QuranProphetParser {
                             PROPHETS_ATTR_ICON_RES,
                             -1
                         ),
+                        thumbnail = parser.getAttributeValue(null, PROPHETS_ATTR_THUMBNAIL)?.let {
+                            "ghraw://AlfaazPlus/QuranAppInventory/master/images/" + it
+                        }
                     )
 
                     lastReference = lastProphet

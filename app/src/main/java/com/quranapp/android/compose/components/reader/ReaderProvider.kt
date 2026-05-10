@@ -1,5 +1,6 @@
 package com.quranapp.android.compose.components.reader
 
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -12,6 +13,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.quranapp.android.R
 import com.quranapp.android.components.reader.ChapterVersePair
 import com.quranapp.android.compose.components.reader.dialogs.BookmarkViewerData
 import com.quranapp.android.compose.components.reader.dialogs.BookmarkViewerSheet
@@ -27,12 +29,16 @@ import com.quranapp.android.db.entities.quran.AyahWordEntity
 import com.quranapp.android.db.relations.VerseWithDetails
 import com.quranapp.android.utils.Log
 import com.quranapp.android.utils.mediaplayer.RecitationController
+import com.quranapp.android.utils.mediaplayer.WbwAudioPlayResult
 import com.quranapp.android.utils.mediaplayer.WbwAudioPlayer
-import com.quranapp.android.utils.quran.QuranUtils
+import com.quranapp.android.utils.quran.QuranMeta
 import com.quranapp.android.utils.reader.LocalVerseActions
 import com.quranapp.android.utils.reader.VerseActions
+import com.quranapp.android.utils.reader.atlas.LocalQuranAtlasBundle
+import com.quranapp.android.utils.reader.atlas.rememberQuranAtlasBundle
 import com.quranapp.android.utils.reader.factory.ReaderFactory
 import com.quranapp.android.utils.reader.wbw.WbwManager
+import com.quranapp.android.utils.univ.MessageUtils
 import com.quranapp.android.utils.univ.StringUtils
 import com.quranapp.android.viewModels.ReaderProviderViewModel
 import kotlinx.coroutines.launch
@@ -58,7 +64,6 @@ data class LocalWbwStateData(
     val onDismissTooltip: () -> Unit,
     val onForcePlay: (AyahWordEntity) -> Unit,
     val onWordClick: (AyahWordEntity) -> Unit,
-    val warmUpWord: (Int, Int, Int) -> Unit,
     val isWbwAudioLoading: (Int, Int, Int) -> Boolean,
     val toggleWbwSheet: (WbwSheetData?) -> Unit,
     val isWbwSheetOpen: Boolean,
@@ -76,6 +81,7 @@ fun ReaderProvider(
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val bundle = rememberQuranAtlasBundle(viewModel.externalQuranDb)
 
     val controller = viewModel.controller
     val recitationState by controller.state.collectAsStateWithLifecycle()
@@ -102,19 +108,34 @@ fun ReaderProvider(
 
 
     fun playWord(word: AyahWordEntity) {
-        val (chapterNo, verseNo) = QuranUtils.getVerseNoFromAyahId(word.ayahId)
+        val (chapterNo, verseNo) = QuranMeta.getVerseNoFromAyahId(word.ayahId)
 
         coroutineScope.launch {
             val key = "$chapterNo:$verseNo:${word.wordIndex}"
             wbwWordLoadingKey = key
 
             try {
-                WbwAudioPlayer.play(
+                when (WbwAudioPlayer.play(
                     context,
                     chapterNo,
                     verseNo,
                     word.wordIndex,
-                )
+                )) {
+                    WbwAudioPlayResult.Success -> Unit
+                    WbwAudioPlayResult.NoInternet -> MessageUtils.popNoInternetToast(context)
+
+                    WbwAudioPlayResult.TimingsNotLoaded -> MessageUtils.showRemovableToast(
+                        context,
+                        R.string.wbwAudioTimingsCouldNotLoad,
+                        Toast.LENGTH_LONG,
+                    )
+
+                    WbwAudioPlayResult.InvalidTiming, WbwAudioPlayResult.NoChapterAudio -> MessageUtils.showRemovableToast(
+                        context,
+                        R.string.wbwAudioCouldNotPlay,
+                        Toast.LENGTH_LONG,
+                    )
+                }
             } finally {
                 if (wbwWordLoadingKey == key) {
                     wbwWordLoadingKey = null
@@ -125,24 +146,23 @@ fun ReaderProvider(
 
     CompositionLocalProvider(
         LocalReaderViewModel provides viewModel,
+        LocalQuranAtlasBundle provides bundle,
         LocalVerseActions provides remember {
             VerseActions(
                 onReferenceClick = { slugs, chapterNo, verses ->
-                    quickReferenceData = QuickReferenceData(slugs, chapterNo, verses)
-                },
+                quickReferenceData = QuickReferenceData(slugs, chapterNo, verses)
+            },
                 onVerseOption = { verse -> verseOptionsVerse = verse },
                 onFootnoteClick = { verse, footnote ->
                     Log.d("FOOTNOTE", verse, footnote)
                     footnotePresenterData = FootnotePresenterData(
-                        verse,
-                        footnote
+                        verse, footnote
                     )
                 },
                 onBookmarkRequest = { chapterNo, verseRange ->
                     coroutineScope.launch {
                         if (viewModel.userRepository.isBookmarked(
-                                chapterNo,
-                                verseRange
+                                chapterNo, verseRange
                             )
                         ) {
                             bookmarkViewerData = BookmarkViewerData(
@@ -153,15 +173,12 @@ fun ReaderProvider(
                             )
                         } else {
                             viewModel.userRepository.addToBookmark(
-                                chapterNo = chapterNo,
-                                verseRange,
-                                note = null
+                                chapterNo = chapterNo, verseRange, note = null
                             )
                         }
                     }
 
-                }
-            )
+                })
         },
         LocalRecitation provides LocalRecitationStateData(
             controller = controller,
@@ -170,16 +187,6 @@ fun ReaderProvider(
         ),
         LocalWbwState provides LocalWbwStateData(
             isWbwRtl = isWbwRtl,
-            warmUpWord = { chapterNo, verseNo, wordIndex ->
-                coroutineScope.launch {
-                    WbwAudioPlayer.warmUp(
-                        context,
-                        chapterNo,
-                        verseNo,
-                        wordIndex,
-                    )
-                }
-            },
             isWbwAudioLoading = { chapterNo, verseNo, wordIndex ->
                 wbwWordLoadingKey == "$chapterNo:$verseNo:$wordIndex"
             },
@@ -193,8 +200,8 @@ fun ReaderProvider(
                     playWord(word)
                 }
 
-                val tooltipEnabled = ReaderPreferences.getWbwTooltipShowTranslation() ||
-                        ReaderPreferences.getWbwTooltipShowTransliteration()
+                val tooltipEnabled =
+                    ReaderPreferences.getWbwTooltipShowTranslation() || ReaderPreferences.getWbwTooltipShowTransliteration()
 
                 activeTooltipWord = if (tooltipEnabled) {
                     word

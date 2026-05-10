@@ -218,7 +218,7 @@
     <string name="verseSyncOn">आयत सिंक: चालू</string>
     <string name="verseSyncOff">आयत सिंक: बंद</string>
     <string name="msgScriptCleanup" formatted="false">%s स्क्रिप्ट और इसके सभी डाउनलोड किए गए फ़ॉन्ट हटा दिए जाएँगे। इनका उपयोग करने के लिए आपको पुनः डाउनलोड करना होगा।</string>
-    <string name="msgRecitationCleanup" formatted="false">%s के सभी डाउनलोड किए तिलावत हटा दिए जाएंगे।</string>
+    <string name="msgRecitationCleanup" formatted="false">%s के सभी डाउनलोड किए तिलावत हटा दिए जाएंगे। सूरह द्वारा व्यक्तिगत रूप से तिलावत को हटाने के लिए, सेटिंग्स में जाएं।</string>
     <string name="titleRecitationCleanup">तिलावत हटाना चाहते हैं\?</string>
     <string name="titleScriptCleanup">स्क्रिप्ट मिटाना चाहते हैं\?</string>
     <string name="nFiles" formatted="false">%d फ़ाइलें</string>
@@ -401,6 +401,7 @@
     <string name="playWord">शब्द का ऑडियो चलाएँ</string>
     <string name="previousWord">पिछला शब्द</string>
     <string name="nextWord">अगला शब्द</string>
+    <string name="wbwSelectLanguage">शब्द-दर-शब्द भाषा चुनें</string>
     <string name="results">परिणाम</string>
     <string name="titleRecentSearches">हाल की खोजें</string>
     <string name="searchInQuran">कुरान में खोजें</string>
@@ -417,4 +418,31 @@
     <string name="discord">डिस्कॉर्ड</string>
     <string name="strTitleDownloadSunnahApp">SunnahApp डाउनलोड करें</string>
     <string name="tajweedColors">तजवीद के रंग</string>
+    <string name="similarVerses">समान आयतें</string>
+    <string name="noSimilarVerses">इस आयत के लिए कोई समान आयत नहीं है।</string>
+    <string name="countSimilarVerses" formatted="false">%1$s में %2$d समान आयतें हैं</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% मिलान · स्कोर %2$d</string>
+    <string name="moreOptions">और विकल्प</string>
+    <string name="whenChapterEnds">जब सूरह समाप्त हो</string>
+    <string name="whenChapterEndsDesc">वर्तमान सूरह समाप्त होने के बाद क्या होना चाहिए, चुनें।</string>
+    <string name="stopPlayback">प्लेबैक रोकें</string>
+    <string name="playNextSurah">अगली सूरह चलाएं</string>
+    <string name="repeatCurrentSurah">वर्तमान सूरह दोहराएं</string>
+    <string name="reset">रीसेट करें</string>
+    <string name="selectAll">सभी चुनें</string>
+    <string name="filterTranslationsDisabledNote">अरबी खोज चालू होने पर अनुवादों में खोज नहीं की जाती।</string>
+    <string name="filterTranslationsEmpty">अभी तक कोई अनुवाद डाउनलोड नहीं हुआ।</string>
+
+    <string name="wbwAudioTimingsCouldNotLoad">शब्दों की टाइमिंग लोड नहीं हो सकी। कनेक्शन जांचें और फिर कोशिश करें।</string>
+    <string name="wbwAudioCouldNotPlay">शब्द का ऑडियो चलाया नहीं जा सका।</string>
+    <string name="wbwAudioDownloadHint">ऑफलाइन सुनने और ज्यादा स्मूथ प्लेबैक के लिए शब्द-दर-शब्द ऑडियो डाउनलोड करें।</string>
+    <string name="wbwAudio">शब्द-दर-शब्द ऑडियो</string>
+    <string name="wbwAudioDownloadAll">सब डाउनलोड करें</string>
+    <string name="wbwAudioDownloadAllConfirm">क्या सभी सूरह का शब्द-दर-शब्द तिलावत ऑडियो डाउनलोड करना है? इससे काफी स्टोरेज और मोबाइल डेटा खर्च हो सकता है।</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">सब डाउनलोड करने से पहले अलग-अलग सूरह के डाउनलोड पूरे होने दें।</string>
+    <string name="wbwAudioChapterWaitForBulk">एक सूरह डाउनलोड करने से पहले पूरा डाउनलोड खत्म होने दें।</string>
+    <string name="ontologyExplorer">विषय अन्वेषक</string>
+    <string name="thematicTopics">विषयवार टॉपिक</string>
+    <string name="englishContentOnly">इस पेज की सामग्री केवल अंग्रेज़ी भाषा में उपलब्ध है।</string>
+    <string name="estimatedSize">अनुमानित आकार: %s</string>
 </resources>

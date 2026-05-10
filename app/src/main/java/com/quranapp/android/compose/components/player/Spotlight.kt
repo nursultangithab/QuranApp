@@ -1,6 +1,5 @@
 package com.quranapp.android.compose.components.player
 
-import ThemeUtils
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -16,6 +15,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -50,7 +50,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -59,9 +58,12 @@ import com.alfaazplus.sunnah.ui.utils.shared_preference.DataStoreManager
 import com.quranapp.android.R
 import com.quranapp.android.components.reader.ChapterVersePair
 import com.quranapp.android.compose.components.common.Loader
+import com.quranapp.android.compose.components.reader.LocalReaderViewModel
+import com.quranapp.android.compose.components.reader.QuranWordText
+import com.quranapp.android.compose.components.reader.ReaderProvider
 import com.quranapp.android.compose.theme.alpha
 import com.quranapp.android.compose.utils.preferences.ReaderPreferences
-import com.quranapp.android.db.DatabaseProvider
+import com.quranapp.android.db.ExternalQuranDatabase
 import com.quranapp.android.db.relations.VerseWithDetails
 import com.quranapp.android.utils.mediaplayer.RecitationController
 import com.quranapp.android.utils.reader.FontResolver
@@ -69,10 +71,14 @@ import com.quranapp.android.utils.reader.QuranScriptUtils
 import com.quranapp.android.utils.reader.QuranTextStyleParams
 import com.quranapp.android.utils.reader.TranslUtils
 import com.quranapp.android.utils.reader.TranslationTextStyleParams
+import com.quranapp.android.utils.reader.atlas.AtlasGlyphPlacement
+import com.quranapp.android.utils.reader.atlas.QuranAtlasLoader
+import com.quranapp.android.utils.reader.atlas.getForWord
 import com.quranapp.android.utils.reader.buildTranslationAnnotatedString
 import com.quranapp.android.utils.reader.factory.QuranTranslationFactory
 import com.quranapp.android.utils.reader.getQuranTextStyle
 import com.quranapp.android.utils.reader.getTranslationTextStyle
+import com.quranapp.android.utils.reader.isQuranAtlasScript
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -170,108 +176,115 @@ private fun SpotlightVersePanel(
 
     val preferences = prefs!!
     val slugs = preferences.get(ReaderPreferences.KEY_TRANSLATIONS)
+
     val scriptCode = QuranScriptUtils.validatePreferredScript(
         preferences.get(ReaderPreferences.KEY_SCRIPT)
     )
+
     val arabicEnabled = preferences.get(ReaderPreferences.KEY_ARABIC_TEXT_ENABLED)
     val arabicMultiplier = preferences.get(ReaderPreferences.KEY_TEXT_SIZE_MULT_ARABIC)
     val translationMultiplier = preferences.get(ReaderPreferences.KEY_TEXT_SIZE_MULT_TRANSL)
 
-    val repository = remember(context) { DatabaseProvider.getQuranRepository(context) }
-    val factory = QuranTranslationFactory.remember(context)
-    val fontResolver = FontResolver.remember()
+    ReaderProvider {
+        val vm = LocalReaderViewModel.current
 
-
-    if (fontResolver == null) {
-        return Loader(true)
-    }
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .navigationBarsPadding(),
-        contentAlignment = Alignment.Center,
-    ) {
-        AnimatedContent<ChapterVersePair>(
-            modifier = Modifier.fillMaxSize(),
-            targetState = versePair,
-            transitionSpec = {
-                fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 1000,
-                        delayMillis = 500,
-                        easing = FastOutSlowInEasing,
-                    ),
-                ) togetherWith fadeOut(
-                    animationSpec = tween(1000, easing = FastOutSlowInEasing),
-                )
-            },
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .navigationBarsPadding(),
             contentAlignment = Alignment.Center,
-            label = "spotlightVerse",
-        ) { pair ->
-            if (!pair.isValid) {
-                Box(modifier = Modifier.fillMaxSize())
-            } else {
-                val chapterNo = pair.chapterNo
-                val verseNo = pair.verseNo
+        ) {
+            AnimatedContent<ChapterVersePair>(
+                modifier = Modifier.fillMaxSize(),
+                targetState = versePair,
+                transitionSpec = {
+                    fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 1000,
+                            delayMillis = 500,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    ) togetherWith fadeOut(
+                        animationSpec = tween(1000, easing = FastOutSlowInEasing),
+                    )
+                },
+                contentAlignment = Alignment.Center,
+                label = "spotlightVerse",
+            ) { pair ->
+                if (!pair.isValid) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    val chapterNo = pair.chapterNo
+                    val verseNo = pair.verseNo
 
-                val verse by produceState<VerseWithDetails?>(
-                    initialValue = null,
-                    repository,
-                    factory,
-                    chapterNo,
-                    verseNo,
-                    scriptCode,
-                    slugs,
-                ) {
-                    value = withContext(Dispatchers.IO) {
-                        val vwd =
-                            repository.getVerseWithDetails(chapterNo, verseNo, scriptCode)
-                                ?: return@withContext null
-                        val aSlug = slugs.firstOrNull() ?: TranslUtils.TRANSL_SLUG_DEFAULT
-                        vwd.apply {
-                            translations = factory.getTranslationsSingleVerse(
-                                setOf(aSlug),
+                    val verse by produceState<VerseWithDetails?>(
+                        initialValue = null,
+                        chapterNo,
+                        verseNo,
+                        scriptCode,
+                        slugs,
+                    ) {
+                        value = withContext(Dispatchers.IO) {
+                            val vwd = vm.repository.getVerseWithDetails(
                                 chapterNo,
                                 verseNo,
+                                scriptCode,
+                                arabicEnabled
                             )
+                                ?: return@withContext null
+                            val aSlug = slugs.firstOrNull() ?: TranslUtils.TRANSL_SLUG_DEFAULT
+
+                            vwd.apply {
+                                translations = QuranTranslationFactory(context).use {
+                                    it.getTranslationsSingleVerse(
+                                        setOf(aSlug),
+                                        chapterNo,
+                                        verseNo,
+                                    )
+                                }
+                            }
                         }
                     }
-                }
 
-                val scrollState = rememberScrollState()
+                    val scrollState = rememberScrollState()
 
-                LaunchedEffect(pair) {
-                    scrollState.scrollTo(0)
-                }
+                    LaunchedEffect(pair) {
+                        scrollState.scrollTo(0)
+                    }
 
-                when (val v = verse) {
-                    null -> Loader(true)
-                    else -> Box(
-                        Modifier
-                            .verticalFadingEdge(scrollState, color = PlayerBgColor, length = 48.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .verticalScroll(scrollState)
-                                .padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
+                    when (val v = verse) {
+                        null -> Loader(true)
+                        else -> Box(
+                            Modifier
+                                .verticalFadingEdge(
+                                    scrollState,
+                                    color = PlayerBgColor,
+                                    length = 48.dp
+                                ),
+                            contentAlignment = Alignment.Center
                         ) {
-                            SpotlightQuranText(
-                                vwd = v,
-                                arabicEnabled = arabicEnabled,
-                                fontResolver = fontResolver,
-                                scriptCode = scriptCode,
-                                arabicMultiplier = arabicMultiplier,
-                            )
-                            SpotlightTranslationText(
-                                vwd = v,
-                                factory = factory,
-                                translationMultiplier = translationMultiplier,
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .verticalScroll(scrollState)
+                                    .padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                SpotlightQuranText(
+                                    vwd = v,
+                                    arabicEnabled = arabicEnabled,
+                                    fontResolver = vm.fontResolver,
+                                    scriptCode = scriptCode,
+                                    arabicMultiplier = arabicMultiplier,
+                                    externalQuranDb = vm.externalQuranDb
+                                )
+
+                                SpotlightTranslationText(
+                                    vwd = v,
+                                    translationMultiplier = translationMultiplier,
+                                )
+                            }
                         }
                     }
                 }
@@ -287,13 +300,13 @@ private fun SpotlightQuranText(
     fontResolver: FontResolver,
     scriptCode: String,
     arabicMultiplier: Float,
+    externalQuranDb: ExternalQuranDatabase,
 ) {
     if (!arabicEnabled) return
 
     val context = LocalContext.current
     val colors = MaterialTheme.colorScheme
     val type = MaterialTheme.typography
-    val isDarkTheme = ThemeUtils.observeDarkTheme()
 
     val style = remember(
         vwd.pageNo,
@@ -302,7 +315,6 @@ private fun SpotlightQuranText(
         fontResolver,
         colors,
         type,
-        isDarkTheme
     ) {
         getQuranTextStyle(
             QuranTextStyleParams(
@@ -314,40 +326,62 @@ private fun SpotlightQuranText(
                 script = scriptCode,
                 sizeMultiplier = arabicMultiplier,
                 useSmallSize = false,
-                isDark = isDarkTheme
+                isDark = true
             ),
-        ).copy(color = PlayerContentColor)
+        ).copy(
+            color = PlayerContentColor,
+            textAlign = TextAlign.Center
+        )
     }
 
-    val text = remember(vwd.words) {
-        buildAnnotatedString {
-            vwd.words.forEachIndexed { index, word ->
-                append(word.text)
-                if (index != vwd.words.lastIndex) {
-                    append(" ")
-                }
-            }
+    val words = vwd.words
+
+    val atlasPlacements by produceState<Map<Int, List<AtlasGlyphPlacement>>>(
+        initialValue = emptyMap(),
+        scriptCode,
+        words,
+        context,
+    ) {
+        value = withContext(Dispatchers.IO) {
+            val atlasBundle = if (scriptCode.isQuranAtlasScript()) {
+                QuranAtlasLoader.getBundle(context, externalQuranDb, scriptCode)
+            } else null
+
+            atlasBundle?.getPlacementsForWords(words) ?: emptyMap()
         }
     }
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        Text(
-            text = text,
-            style = style,
-            modifier = Modifier.padding(8.dp),
-            textAlign = TextAlign.Center,
-        )
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(
+                6.dp,
+                Alignment.CenterHorizontally
+            ),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            words.forEach { word ->
+                QuranWordText(
+                    word = word,
+                    atlasPlacements = atlasPlacements.getForWord(word),
+                    style = style,
+                )
+            }
+        }
     }
 }
 
 @Composable
 private fun SpotlightTranslationText(
     vwd: VerseWithDetails,
-    factory: QuranTranslationFactory,
     translationMultiplier: Float,
 ) {
     val translations = vwd.translations
     if (translations.isEmpty()) return
+
+    val type = MaterialTheme.typography
 
     SelectionContainer {
         Column(
@@ -358,7 +392,11 @@ private fun SpotlightTranslationText(
             translations.forEach { translation ->
                 val tStyle = remember(translation.bookSlug, translationMultiplier) {
                     getTranslationTextStyle(
-                        TranslationTextStyleParams(translation.bookSlug, translationMultiplier),
+                        TranslationTextStyleParams(
+                            translation.bookSlug,
+                            type,
+                            translationMultiplier
+                        ),
                     ).copy(color = PlayerContentColor.alpha(0.85f))
                 }
 

@@ -1,19 +1,20 @@
 package com.quranapp.android.compose.components.reader
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,22 +27,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastCoerceAtLeast
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.quranapp.android.R
 import com.quranapp.android.compose.components.common.Loader
 import com.quranapp.android.compose.components.reader.navigator.ReaderFooterNavigator
-import com.quranapp.android.db.entities.BookmarkKey
+import com.quranapp.android.db.entities.user.BookmarkKey
 import com.quranapp.android.db.entities.wbw.WbwWordEntity
 import com.quranapp.android.db.relations.VerseWithDetails
 import com.quranapp.android.utils.reader.MUSHAF_FONT_WIDTH_DP_MAX
+import com.quranapp.android.utils.reader.atlas.AtlasGlyphPlacement
 import com.quranapp.android.viewModels.ReaderUiState
 import com.quranapp.android.viewModels.ReaderViewModel
 import kotlinx.coroutines.delay
@@ -75,6 +81,7 @@ sealed class ReaderLayoutItem() {
 
     data class VerseUI(
         val verse: VerseWithDetails,
+        val atlasPlacements: Map<Int, List<AtlasGlyphPlacement>>,
         // list of Pair<langCode, text>
         val parsedTranslationTexts: List<Pair<String, AnnotatedString>> = emptyList(),
         val wbwByWordIndex: Map<Int, WbwWordEntity>? = null,
@@ -99,7 +106,7 @@ data class ReaderPreparedData(
 @Composable
 fun ReaderLayout(
     readerVm: ReaderViewModel,
-    nestedScrollConnection: NestedScrollConnection,
+    nestedScrollConnection: NestedScrollConnection?,
     onSyncStateChanged: (Boolean) -> Unit = {},
 ) {
     val uiState by readerVm.uiState.collectAsStateWithLifecycle()
@@ -161,7 +168,7 @@ fun ReaderLayout(
 private fun ReaderLayoutVerseMode(
     readerVm: ReaderViewModel,
     uiState: ReaderUiState,
-    nestedScrollConnection: NestedScrollConnection,
+    nestedScrollConnection: NestedScrollConnection?,
     onSyncStateChanged: (Boolean) -> Unit,
 ) {
     val listState = rememberLazyListState()
@@ -243,13 +250,16 @@ private fun ReaderLayoutVerseMode(
 
     LaunchedEffect(navigateToVerse, items) {
         val (chapterNo, verseNo) = navigateToVerse ?: return@LaunchedEffect
+
         val idx = items.indexOfFirst { item ->
             item is ReaderLayoutItem.VerseUI &&
                     item.verse.chapterNo == chapterNo &&
                     item.verse.verseNo == verseNo
         }
+
         if (idx >= 0) {
-            listState.requestScrollToItem(idx)
+            val optimalIdx = items.findOptimalScrollIndex(idx)
+            listState.scrollToItem(optimalIdx)
             readerVm.consumeVerseNavigation()
         }
     }
@@ -268,7 +278,10 @@ private fun ReaderLayoutVerseMode(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .nestedScroll(nestedScrollConnection)
+                .then(
+                    if (nestedScrollConnection == null) Modifier
+                    else Modifier.nestedScroll(nestedScrollConnection)
+                )
                 .pointerInput(autoScrollSpeed) {
                     awaitPointerEventScope {
                         while (true) {
@@ -334,17 +347,21 @@ private fun TranslationRow(
 private fun SectionMarkerRow(marker: ReaderLayoutItem.SectionMarker) {
     if (marker.text.isEmpty()) return
 
+    val decorationTint = MaterialTheme.colorScheme.primary
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
-        HorizontalDivider(
-            modifier = Modifier
-                .weight(1f)
-                .widthIn(min = 100.dp),
-            color = MaterialTheme.colorScheme.outlineVariant,
+
+        Image(
+            painterResource(R.drawable.vector_1),
+            contentDescription = null,
+            modifier = Modifier.height(24.dp),
+            colorFilter = ColorFilter.tint(decorationTint)
         )
 
         Text(
@@ -355,11 +372,36 @@ private fun SectionMarkerRow(marker: ReaderLayoutItem.SectionMarker) {
             textAlign = TextAlign.Center
         )
 
-        HorizontalDivider(
+        Image(
+            painterResource(R.drawable.vector_1),
+            contentDescription = null,
             modifier = Modifier
-                .weight(1f)
-                .widthIn(min = 100.dp),
-            color = MaterialTheme.colorScheme.outlineVariant,
+                .height(24.dp)
+                .scale(-1f, 1f),
+            colorFilter = ColorFilter.tint(decorationTint)
         )
     }
+}
+
+private fun List<ReaderLayoutItem>.findOptimalScrollIndex(targetIndex: Int): Int {
+    if (targetIndex <= 0) return targetIndex.fastCoerceAtLeast(0)
+
+    var optimalIndex = targetIndex
+    var i = targetIndex - 1
+
+    while (i >= 0) {
+        when (this[i]) {
+            is ReaderLayoutItem.ChapterInfo,
+            is ReaderLayoutItem.Bismillah,
+            is ReaderLayoutItem.IsVotd,
+            is ReaderLayoutItem.ChapterTitle -> {
+                optimalIndex = i
+                i--
+            }
+
+            else -> break
+        }
+    }
+
+    return optimalIndex
 }

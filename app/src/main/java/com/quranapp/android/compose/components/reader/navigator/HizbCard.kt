@@ -29,8 +29,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.quranapp.android.R
 import com.quranapp.android.compose.theme.alpha
+import com.quranapp.android.compose.utils.LocalAppLocale
+import com.quranapp.android.compose.utils.formattedStringResource
 import com.quranapp.android.db.relations.NavigationUnit
-import java.util.Locale
 
 
 @Composable
@@ -41,6 +42,7 @@ fun HizbCard(
     isFavourite: Boolean = false,
     onToggleFavourite: (() -> Unit)? = null,
 ) {
+    val appLocale = LocalAppLocale.current
     val showFavouriteIcon = onToggleFavourite != null
     val firstSurah = hizb.ranges.firstOrNull()
     val lastSurah = hizb.ranges.lastOrNull()
@@ -79,7 +81,7 @@ fun HizbCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = hizb.unitNo.toString(),
+                    text = String.format(appLocale.platformLocale, "%d", hizb.unitNo),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Normal,
                     color = colorScheme.onSurface
@@ -91,9 +93,8 @@ fun HizbCard(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.labelHizbNo, hizb.unitNo),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
+                    text = formattedStringResource(R.string.labelHizbNo, hizb.unitNo),
+                    style = MaterialTheme.typography.titleSmall,
                     color = colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -101,12 +102,12 @@ fun HizbCard(
 
                 Text(
                     text = String.format(
-                        Locale.getDefault(),
+                        appLocale.platformLocale,
                         $$"%1$d:%2$d - %3$d:%4$d",
-                        firstSurah?.surah?.surah?.surahNo ?: "",
-                        firstSurah?.startAyah ?: "",
-                        lastSurah?.surah?.surah?.surahNo ?: "",
-                        lastSurah?.endAyah ?: ""
+                        firstSurah?.surah?.surah?.surahNo ?: 0,
+                        firstSurah?.startAyah ?: 0,
+                        lastSurah?.surah?.surah?.surahNo ?: 0,
+                        lastSurah?.endAyah ?: 0
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = colorScheme.onSurface.alpha(0.7f),

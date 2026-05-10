@@ -8,7 +8,7 @@ import com.quranapp.android.compose.utils.DataLoadError
 import com.quranapp.android.compose.utils.preferences.ReaderPreferences
 import com.quranapp.android.db.DatabaseProvider
 import com.quranapp.android.utils.managers.ResourceDownloadStatus
-import com.quranapp.android.utils.managers.WbwDownloadManager
+import com.quranapp.android.utils.reader.wbw.WbwDownloadManager
 import com.quranapp.android.utils.reader.wbw.WbwManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,8 +35,8 @@ data class WbwSettingsUiState(
 class WbwSettingsViewModel(
     application: Application
 ) : AndroidViewModel(application) {
-    private val db = DatabaseProvider.getExternalQuranDatabase(context)
     private val context get() = getApplication<Application>()
+    private val db get() = DatabaseProvider.getExternalQuranDatabase(context)
 
     private val _uiState = MutableStateFlow(WbwSettingsUiState())
     val uiState: StateFlow<WbwSettingsUiState> = _uiState.asStateFlow()

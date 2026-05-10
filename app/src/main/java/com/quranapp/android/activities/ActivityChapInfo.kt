@@ -5,13 +5,12 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.quranapp.android.activities.base.BaseActivity
 import com.quranapp.android.compose.screens.chapterInfo.ChapterInfoScreen
 import com.quranapp.android.compose.theme.QuranAppTheme
-import com.quranapp.android.compose.utils.appLocale
+import com.quranapp.android.compose.utils.appPlatformLocale
 import com.quranapp.android.utils.IntentUtils.INTENT_ACTION_OPEN_CHAPTER_INFO
 import com.quranapp.android.utils.univ.Keys
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,8 +21,6 @@ class ActivityChapInfo : BaseActivity() {
     override fun getLayoutResource() = 0
 
     override fun onActivityInflated(activityView: View, savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
-
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(isTaskRoot) {
             override fun handleOnBackPressed() {
                 launchMainActivity()
@@ -42,7 +39,7 @@ class ActivityChapInfo : BaseActivity() {
             }
 
             val (initialChapterNo, initialLanguage) =
-                resolveChapterInfoStartArgs(currentIntent!!, appLocale().language)
+                resolveChapterInfoStartArgs(currentIntent!!, appPlatformLocale().language)
 
             QuranAppTheme {
                 ChapterInfoScreen(

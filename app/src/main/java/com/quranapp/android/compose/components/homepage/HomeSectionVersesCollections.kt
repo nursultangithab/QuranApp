@@ -32,6 +32,8 @@ import com.quranapp.android.R
 import com.quranapp.android.activities.reference.ActivityExclusiveVerses
 import com.quranapp.android.activities.reference.ActivityProphets
 import com.quranapp.android.activities.reference.ActivityQuranScience
+import com.quranapp.android.activities.reference.ActivityQuranicTopics
+import com.quranapp.android.compose.screens.quranictopics.QuranicTopicsStart
 import com.quranapp.android.compose.screens.reference.ExclusiveVersesScreenKind
 import com.quranapp.android.compose.theme.alpha
 
@@ -103,7 +105,29 @@ fun HomeSectionVersesCollections() {
                 context.startActivity(
                     Intent(context, ActivityQuranScience::class.java)
                 )
-            }
+            },
+            VersesCollectionCard(
+                R.string.ontologyExplorer,
+                R.drawable.hierarchy,
+            ) {
+                context.startActivity(
+                    Intent(context, ActivityQuranicTopics::class.java).putExtra(
+                        ActivityQuranicTopics.KEY_SCREEN_TYPE,
+                        QuranicTopicsStart.Ontology.name
+                    )
+                )
+            },
+            VersesCollectionCard(
+                R.string.thematicTopics,
+                R.drawable.dr_icon_read_quran,
+            ) {
+                context.startActivity(
+                    Intent(context, ActivityQuranicTopics::class.java).putExtra(
+                        ActivityQuranicTopics.KEY_SCREEN_TYPE,
+                        QuranicTopicsStart.Thematic.name
+                    )
+                )
+            },
         )
     }
 
@@ -150,7 +174,7 @@ private fun CollectionCard(
         modifier = modifier.height(120.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = colorScheme.surfaceContainer.alpha(0.75f)
+            containerColor = colorScheme.surfaceContainer.alpha(0.9f)
         ),
         border = BorderStroke(1.dp, colorScheme.outline.copy(alpha = 0.1f))
     ) {

@@ -5,7 +5,7 @@ import android.net.Uri
 import androidx.core.net.toUri
 import androidx.work.WorkManager
 import com.quranapp.android.api.JsonHelper
-import com.quranapp.android.api.RetrofitInstance
+import com.quranapp.android.api.fetchInventoryStreamingResponse
 import com.quranapp.android.api.models.mediaplayer.ChapterTimingMetadata
 import com.quranapp.android.api.models.mediaplayer.RecitationAudioKind
 import com.quranapp.android.api.models.mediaplayer.RecitationAudioTrack
@@ -20,6 +20,7 @@ import com.quranapp.android.utils.extensions.isGzip
 import com.quranapp.android.utils.reader.recitation.RecitationUtils.URL_CHAPTER_PATTERN
 import com.quranapp.android.utils.receivers.NetworkStateReceiver
 import com.quranapp.android.utils.univ.FileUtils
+import com.quranapp.android.utils.univ.StringUtils
 import com.quranapp.android.utils.workers.RecitationAudioDownloadWorker
 import com.quranapp.android.utils.workers.RecitationBulkDownloadWorker
 import kotlinx.coroutines.Dispatchers
@@ -51,7 +52,7 @@ class RecitationAudioRepository(private val context: Context) {
                 while (matcher.find()) {
                     val group = matcher.group(1)
                     if (group != null) {
-                        url = matcher.replaceFirst(String.format(Locale.ENGLISH, group, chapterNo))
+                        url = matcher.replaceFirst(StringUtils.formatInvariant(group, chapterNo))
                         matcher.reset(url)
                     }
                 }
@@ -360,21 +361,11 @@ class RecitationAudioRepository(private val context: Context) {
         }
     }
 
-    /**
-     * `ghraw://` is stripped to a relative path and fetched via GithubLikeApi (mirror root from user settings).
-     * Any other string is treated as a full URL and fetched via AnyApi.
-     */
     private suspend fun downloadTimingMetadata(
         file: File,
         timingUrl: String,
     ) = withContext(Dispatchers.IO) {
-        val response = if (timingUrl.startsWith("ghraw://")) {
-            RetrofitInstance.githubLike.getRawContent(
-                timingUrl.removePrefix("ghraw://").trimStart('/')
-            )
-        } else {
-            RetrofitInstance.any.downloadStreaming(timingUrl)
-        }
+        val response = fetchInventoryStreamingResponse(timingUrl)
 
         if (!response.isSuccessful) {
             if (response.code() == 404) throw HttpNotFoundException()

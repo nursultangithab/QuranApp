@@ -4,6 +4,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("kotlinx-serialization")
     id("kotlin-kapt")
+    id("kotlin-parcelize")
     alias(libs.plugins.kotlin.compose.compiler)
 }
 
@@ -19,8 +20,8 @@ android {
         // I don't know why I've used such a weird versioning scheme in the beginning,
         // but I can't change it now as the app is already in the Play Store
         // now just incrementing from there
-        versionCode = 23_11_11_136
-        versionName = "2026.04.24.2"
+        versionCode = 23_11_11_140
+        versionName = "2026.05.03.1"
 
         resValue("string", "app_name", "QuranApp")
 
@@ -90,6 +91,13 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    dependenciesInfo {
+        // Disables dependency metadata when building APKs (for IzzyOnDroid/F-Droid)
+        includeInApk = false
+        // Disables dependency metadata when building Android App Bundles (for Google Play)
+        includeInBundle = false
+    }
 }
 
 base {
@@ -112,6 +120,8 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.compose.foundation.layout)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material3.windowSizeClass)
+    implementation(libs.compose.material3.adaptive)
     implementation(libs.compose.runtime.livedata)
     implementation(libs.compose.ui.tooling)
     implementation(libs.lifecycle.viewmodel.compose)
@@ -166,4 +176,8 @@ dependencies {
     implementation(libs.navigation.ui.ktx)
 
     implementation(libs.accompanist.permissions)
+    implementation(libs.glance)
+    implementation(libs.glance.appwidget)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 }

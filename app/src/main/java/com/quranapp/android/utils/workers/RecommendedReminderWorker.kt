@@ -10,6 +10,7 @@ import androidx.work.WorkerParameters
 import com.quranapp.android.R
 import com.quranapp.android.activities.ActivityReader
 import com.quranapp.android.activities.reference.ActivityReference
+import com.quranapp.android.components.ReferenceVerseModel
 import com.quranapp.android.compose.utils.preferences.VersePreferences
 import com.quranapp.android.utils.app.NotificationUtils
 import com.quranapp.android.utils.reader.ReaderIntentData
@@ -104,8 +105,8 @@ class RecommendedReminderWorker(
 
             is RecommendationRef.Verses -> {
                 val ranges = ref.spec.split(',')
-                val chapters = mutableListOf<Int>()
-                val verseSpecs = mutableListOf<String>()
+                val chapters = mutableSetOf<Int>()
+                val verseSpecs = mutableSetOf<String>()
 
                 for (rangeSpec in ranges) {
                     val trimmed = rangeSpec.trim()
@@ -118,11 +119,13 @@ class RecommendedReminderWorker(
                 val desc = recommendation.description.takeIf { it.isNotBlank() }
 
                 ReaderFactory.prepareReferenceVerseIntent(
-                    recommendation.title,
-                    desc,
-                    emptyArray(),
-                    chapters,
-                    verseSpecs,
+                    ReferenceVerseModel(
+                        recommendation.title,
+                        desc,
+                        emptySet(),
+                        chapters,
+                        verseSpecs,
+                    )
                 ).apply {
                     setClass(context, ActivityReference::class.java)
                 }

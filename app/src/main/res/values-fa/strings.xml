@@ -217,7 +217,7 @@
 \nمنابع زیر را می توان آزاد کرد:</string>
     <string name="recitationCanBeFreedUp" formatted="false">%1$d فایل تلاوت ذخیره شده از %2$d تلاوت کننده را می توان آزاد کرد.</string>
     <string name="tafseerCanBeFreedUp" formatted="false">%d تفسیر ذخیره شده قابل پاکسازی است.</string>
-    <string name="msgRecitationCleanup" formatted="false">تمام تلاوت ذخیره شده از %s حذف خواهد شد.</string>
+    <string name="msgRecitationCleanup" formatted="false">تمام تلاوت ذخیره شده از %s حذف خواهد شد. برای حذف جداگانه تلاوت‌ها بر اساس سوره، به تنظیمات بروید.</string>
     <string name="nItems" formatted="false">%d موارد</string>
     <string name="nItem" formatted="false">%d مورد</string>
     <string name="nScriptsAndFonts" formatted="false">%1$d اسکریپت و %2$d قلم</string>
@@ -394,6 +394,7 @@
     <string name="playWord">پخش کلمه</string>
     <string name="previousWord">کلمه قبلی</string>
     <string name="nextWord">کلمه بعدی</string>
+    <string name="wbwSelectLanguage">انتخاب زبان کلمه‌به‌کلمه</string>
     <string name="results">نتایج</string>
     <string name="titleRecentSearches">جستجوهای اخیر</string>
     <string name="searchInQuran">جستجو در قرآن</string>
@@ -410,5 +411,31 @@
     <string name="discord">دیسکورد</string>
     <string name="strTitleDownloadSunnahApp">دانلود SunnahApp</string>
     <string name="tajweedColors">رنگ های تجوید</string>
-</resources>
+    <string name="similarVerses">آیات مشابه</string>
+    <string name="noSimilarVerses">برای این آیه، آیه مشابهی وجود ندارد.</string>
+    <string name="countSimilarVerses" formatted="false">%1$s دارای %2$d آیه مشابه است</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% تطابق · امتیاز %2$d</string>
+    <string name="moreOptions">گزینه‌های بیشتر</string>
+    <string name="whenChapterEnds">هنگام پایان سوره</string>
+    <string name="whenChapterEndsDesc">انتخاب کنید پس از پایان پخش سوره فعلی چه اتفاقی بیفتد.</string>
+    <string name="stopPlayback">توقف پخش</string>
+    <string name="playNextSurah">پخش سوره بعدی</string>
+    <string name="repeatCurrentSurah">تکرار سوره فعلی</string>
+    <string name="reset">بازنشانی</string>
+    <string name="selectAll">انتخاب همه</string>
+    <string name="filterTranslationsDisabledNote">وقتی جستجوی عربی روشن است، در ترجمه‌ها جستجو نمی‌شود.</string>
+    <string name="filterTranslationsEmpty">هنوز ترجمه‌ای دانلود نشده است.</string>
 
+    <string name="wbwAudioTimingsCouldNotLoad">زمان‌بندی کلمات بارگذاری نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.</string>
+    <string name="wbwAudioCouldNotPlay">پخش صوت کلمه ممکن نشد.</string>
+    <string name="wbwAudioDownloadHint">برای گوش‌دادن آفلاین و پخش روان‌تر، صوت کلمه‌به‌کلمه را دانلود کنید.</string>
+    <string name="wbwAudio">صوت کلمه‌به‌کلمه</string>
+    <string name="wbwAudioDownloadAll">دانلود همه</string>
+    <string name="wbwAudioDownloadAllConfirm">صوت تلاوت کلمه‌به‌کلمه همه سوره‌ها دانلود شود؟ این کار ممکن است حجم زیادی از حافظه و دیتای موبایل مصرف کند.</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">پیش از دانلود همه، صبر کنید دانلود سوره‌های تکی تمام شود.</string>
+    <string name="wbwAudioChapterWaitForBulk">پیش از دانلود یک سوره، صبر کنید دانلود کامل به پایان برسد.</string>
+    <string name="ontologyExplorer">کاوش موضوعات قرآن</string>
+    <string name="thematicTopics">موضوعات بر اساس دسته‌بندی</string>
+    <string name="englishContentOnly">محتوای این صفحه فقط به زبان انگلیسی در دسترس است.</string>
+    <string name="estimatedSize">حجم تخمینی: %s</string>
+</resources>

@@ -222,7 +222,7 @@
     <string name="titleScriptCleanup">اسکرپٹ حذف کریں؟</string>
     <string name="nFiles" formatted="false">%d فائل</string>
     <string name="nScriptsAndFonts" formatted="false">%1$d اسکرپٹ اور %2$d فونٹ</string>
-    <string name="msgRecitationCleanup" formatted="false">%s کی تمام ذخیرہ شدہ تلاوتیں حذف کر دی جائیں گی۔</string>
+    <string name="msgRecitationCleanup" formatted="false">%s کی تمام ذخیرہ شدہ تلاوتیں حذف کر دی جائیں گی۔ سورت کے حساب سے انفرادی طور پر تلاوتیں حذف کرنے کے لیے ترتیبات میں جائیں۔</string>
     <string name="msgScriptCleanup" formatted="false">%s اسکرپٹ اور اس کے تمام ذخیرہ شدہ فونٹس کو حذف کر دیا جائے گا۔ انہیں استعمال کرنے کے لیے آپ کو دوبارہ ڈاؤن لوڈ کرنے کی ضرورت ہوگی۔</string>
     <string name="inPlaces">%s میں</string>
     <string name="inPlacesMore">%1$s اور %2$d مزید میں</string>
@@ -401,6 +401,7 @@
     <string name="playWord">لفظ آڈیو چلائیں</string>
     <string name="previousWord">پچھلا لفظ</string>
     <string name="nextWord">اگلا لفظ</string>
+    <string name="wbwSelectLanguage">لفظ بہ لفظ کی زبان منتخب کریں</string>
     <string name="results">نتائج</string>
     <string name="titleRecentSearches">‫حالیہ تلاشیں</string>
     <string name="searchInQuran">قرآن میں تلاش کریں</string>
@@ -417,4 +418,31 @@
     <string name="discord">ڈسکورڈ</string>
     <string name="strTitleDownloadSunnahApp">SunnahApp ڈاؤن لوڈ کریں</string>
     <string name="tajweedColors">تجوید کے رنگ</string>
+    <string name="similarVerses">مشابہ آیات</string>
+    <string name="noSimilarVerses">اس آیت کے لیے کوئی مشابہ آیت موجود نہیں ہے۔</string>
+    <string name="countSimilarVerses" formatted="false">%1$s میں %2$d مشابہ آیات ہیں</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% مطابقت · اسکور %2$d</string>
+    <string name="moreOptions">مزید اختیارات</string>
+    <string name="whenChapterEnds">جب سورت ختم ہو</string>
+    <string name="whenChapterEndsDesc">موجودہ سورت ختم ہونے کے بعد کیا ہونا چاہیے، منتخب کریں۔</string>
+    <string name="stopPlayback">پلے بیک روکیں</string>
+    <string name="playNextSurah">اگلی سورت چلائیں</string>
+    <string name="repeatCurrentSurah">موجودہ سورت دہرائیں</string>
+    <string name="reset">ری سیٹ</string>
+    <string name="selectAll">سب منتخب کریں</string>
+    <string name="filterTranslationsDisabledNote">عربی تلاش آن ہونے پر تراجم میں تلاش نہیں ہوتی۔</string>
+    <string name="filterTranslationsEmpty">ابھی تک کوئی ترجمہ ڈاؤن لوڈ نہیں ہوا۔</string>
+
+    <string name="wbwAudioTimingsCouldNotLoad">الفاظ کی ٹائمنگ لوڈ نہیں ہو سکی۔ کنکشن چیک کریں اور دوبارہ کوشش کریں۔</string>
+    <string name="wbwAudioCouldNotPlay">لفظ کا آڈیو چلایا نہیں جا سکا۔</string>
+    <string name="wbwAudioDownloadHint">آف لائن سننے اور زیادہ ہموار پلے بیک کے لیے لفظ بہ لفظ آڈیو ڈاؤن لوڈ کریں۔</string>
+    <string name="wbwAudio">لفظ بہ لفظ آڈیو</string>
+    <string name="wbwAudioDownloadAll">سب ڈاؤن لوڈ کریں</string>
+    <string name="wbwAudioDownloadAllConfirm">کیا تمام سورتوں کی لفظ بہ لفظ تلاوت آڈیو ڈاؤن لوڈ کرنی ہے؟ اس سے کافی اسٹوریج اور موبائل ڈیٹا استعمال ہو سکتا ہے۔</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">سب ڈاؤن لوڈ کرنے سے پہلے انفرادی سورتوں کے ڈاؤن لوڈ مکمل ہونے دیں۔</string>
+    <string name="wbwAudioChapterWaitForBulk">ایک سورت ڈاؤن لوڈ کرنے سے پہلے مکمل ڈاؤن لوڈ ختم ہونے دیں۔</string>
+    <string name="ontologyExplorer">موضوعات ایکسپلورر</string>
+    <string name="thematicTopics">موضوع کے لحاظ سے عنوانات</string>
+    <string name="englishContentOnly">اس صفحے کا مواد صرف انگریزی زبان میں دستیاب ہے۔</string>
+    <string name="estimatedSize">اندازاً سائز: %s</string>
 </resources>

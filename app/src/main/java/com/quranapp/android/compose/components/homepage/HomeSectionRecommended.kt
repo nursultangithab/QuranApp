@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.quranapp.android.R
+import com.quranapp.android.components.ReferenceVerseModel
 import com.quranapp.android.db.DatabaseProvider
 import com.quranapp.android.utils.reader.factory.ReaderFactory
 import com.quranapp.android.utils.recommended.Recommendation
@@ -75,8 +76,8 @@ private fun RecommendationCard(
 
                     is RecommendationRef.Verses -> {
                         val ranges = ref.spec.split(',')
-                        val chapters = mutableListOf<Int>()
-                        val verseSpecs = mutableListOf<String>()
+                        val chapters = mutableSetOf<Int>()
+                        val verseSpecs = mutableSetOf<String>()
 
                         ranges.forEach { rangeSpec ->
                             val trimmed = rangeSpec.trim()
@@ -89,11 +90,12 @@ private fun RecommendationCard(
 
                         ReaderFactory.startReferenceVerse(
                             context = context,
-                            title = recommendation.title,
-                            desc = recommendation.description,
-                            translSlug = emptyArray(),
-                            chapters = chapters.distinct(),
-                            verses = verseSpecs
+                            ReferenceVerseModel(
+                                title = recommendation.title,
+                                desc = recommendation.description,
+                                chapters = chapters,
+                                verses = verseSpecs
+                            )
                         )
 
                         return@clickable
@@ -113,8 +115,7 @@ private fun RecommendationCard(
                 resolvedChapterName?.let { name ->
                     Text(
                         text = stringResource(R.string.strLabelSurah, name),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Black,
+                        style = MaterialTheme.typography.titleSmall,
                         color = Color.White
                     )
                 }
@@ -122,7 +123,7 @@ private fun RecommendationCard(
                 Text(
                     text = recommendation.title,
                     style = if (resolvedChapterName != null) MaterialTheme.typography.labelMedium
-                    else MaterialTheme.typography.titleMedium,
+                    else MaterialTheme.typography.titleSmall,
                     fontWeight = if (resolvedChapterName != null) FontWeight.Medium else FontWeight.Bold,
                     color = if (resolvedChapterName != null) Color.White.copy(alpha = 0.8f) else Color.White
                 )

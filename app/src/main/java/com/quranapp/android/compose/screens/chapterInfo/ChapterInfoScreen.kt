@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +51,7 @@ import com.quranapp.android.compose.components.reader.dialogs.QuickReference
 import com.quranapp.android.compose.components.reader.dialogs.QuickReferenceData
 import com.quranapp.android.compose.components.reader.dialogs.QuickReferenceVerses
 import com.quranapp.android.compose.components.reader.navigator.ChapterVerseNavigator
+import com.quranapp.android.compose.utils.LocalAppLocale
 import com.quranapp.android.compose.utils.preferences.ReaderPreferences
 import com.quranapp.android.db.entities.quran.RevelationType
 import com.quranapp.android.utils.Log
@@ -89,7 +91,7 @@ fun ChapterInfoScreen(
     }
 
     var quickRefData by remember { mutableStateOf<QuickReferenceData?>(null) }
-    var showChapterNavigator by remember { mutableStateOf(false) }
+    var showChapterNavigator by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier,
@@ -172,7 +174,8 @@ private fun ChapterInfoTopBar(
     uiState: ChapterInfoUiState,
     onOpenChapterNavigator: () -> Unit,
 ) {
-    val chapterName = uiState.swl?.getCurrentName().orEmpty()
+    val appLocale = LocalAppLocale.current
+    val chapterName = uiState.swl?.let { it.getCurrentName() }.orEmpty()
     val chapterNo = uiState.chapterNo
 
     AppBar(
@@ -184,12 +187,13 @@ private fun ChapterInfoTopBar(
                         text = if (chapterNo >= 1) {
                             if (chapterName.isNotEmpty()) {
                                 String.format(
+                                    appLocale.platformLocale,
                                     $$"%1$d. %2$s",
                                     chapterNo,
                                     chapterName,
                                 )
                             } else {
-                                chapterNo.toString()
+                                String.format(appLocale.platformLocale, "%d", chapterNo)
                             }
                         } else {
                             ""
@@ -221,13 +225,17 @@ private fun ChapterInfoWebViewContent(
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
+    val appLocale = LocalAppLocale.current
 
     val contentData =
-        remember(uiState.chapterNo, uiState.swl, uiState.juzNos, contentState.langCode) {
+        remember(uiState.chapterNo, uiState.swl, uiState.juzNos, contentState.langCode, appLocale) {
             val meta = uiState.swl ?: return@remember null
             ChapterInfoContentData(
                 uiState.chapterNo,
-                resources.getString(R.string.strLabelSurah, meta.getCurrentName()),
+                resources.getString(
+                    R.string.strLabelSurah,
+                    meta.getCurrentName()
+                ),
                 contentState.langCode,
                 meta.surah.ayahCount,
                 meta.surah.rukusCount,
@@ -277,9 +285,11 @@ private fun ChapterInfoWebViewContent(
                 }
 
                 val html = contentState.html
+
                 if (lastLoad != html) {
+                    isLoading = false
+
                     lastLoad = html
-                    isLoading = true
                     webView.loadDataWithBaseURL(
                         null,
                         html,

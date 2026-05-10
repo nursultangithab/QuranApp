@@ -198,7 +198,7 @@
 \n
 \nتحتاج إلى تنزيله مرة آخرى.</string>
     <string name="titleRecitationCleanup">هل تريد حذف التلاوة؟</string>
-    <string name="msgRecitationCleanup" formatted="false">كل التلاوات المخزنة من %s سيتم حذفها.</string>
+    <string name="msgRecitationCleanup" formatted="false">كل التلاوات المخزنة من %s سيتم حذفها. لحذف التلاوات بشكل فردي حسب السورة، اذهب إلى الإعدادات.</string>
     <string name="msgScriptCleanup" formatted="false">سيتم حذف خط %s. ستحتاج إلى إعادة التنزيل لاستخدامها.</string>
     <string name="nothingToCleanup">لا يوجد شيء لتنظيف مساحة التخزين.</string>
     <string name="onboardDescTheme">يمكنك تغيرها فيما بعد.</string>
@@ -397,6 +397,7 @@
     <string name="playWord">تشغيل الكلمة</string>
     <string name="previousWord">الكلمة السابقة</string>
     <string name="nextWord">الكلمة التالية</string>
+    <string name="wbwSelectLanguage">اختر لغة كلمة بكلمة</string>
     <string name="results">النتائج</string>
     <string name="titleRecentSearches">عمليات البحث الأخيرة</string>
     <string name="searchInQuran">بحث في القرآن</string>
@@ -413,4 +414,31 @@
     <string name="discord">ديسكورد</string>
     <string name="strTitleDownloadSunnahApp">تحميل SunnahApp</string>
     <string name="tajweedColors">ألوان التجويد</string>
+    <string name="similarVerses">الآيات المتشابهة</string>
+    <string name="noSimilarVerses">لا توجد آيات متشابهة لهذه الآية.</string>
+    <string name="countSimilarVerses" formatted="false">%1$s تحتوي على %2$d آيات متشابهة</string>
+    <string name="similarVerseRowMeta" formatted="false">تطابق %1$d%% · النتيجة %2$d</string>
+    <string name="moreOptions">خيارات إضافية</string>
+    <string name="whenChapterEnds">عند انتهاء السورة</string>
+    <string name="whenChapterEndsDesc">اختر ما يحدث بعد انتهاء تشغيل السورة الحالية.</string>
+    <string name="stopPlayback">إيقاف التشغيل</string>
+    <string name="playNextSurah">تشغيل السورة التالية</string>
+    <string name="repeatCurrentSurah">إعادة السورة الحالية</string>
+    <string name="reset">إعادة تعيين</string>
+    <string name="selectAll">تحديد الكل</string>
+    <string name="filterTranslationsDisabledNote">لا يتم البحث في التراجم عند تفعيل البحث في النص العربي.</string>
+    <string name="filterTranslationsEmpty">لم تُنزَّل أي ترجمات بعد.</string>
+
+    <string name="wbwAudioTimingsCouldNotLoad">تعذّر تحميل توقيتات الكلمات. تحقّق من اتصالك ثم حاول مرة أخرى.</string>
+    <string name="wbwAudioCouldNotPlay">تعذّر تشغيل صوت الكلمة.</string>
+    <string name="wbwAudioDownloadHint">نزّل الصوت كلمة بكلمة للاستماع دون اتصال وتشغيل أكثر سلاسة.</string>
+    <string name="wbwAudio">الصوت كلمة بكلمة</string>
+    <string name="wbwAudioDownloadAll">تنزيل الكل</string>
+    <string name="wbwAudioDownloadAllConfirm">هل تريد تنزيل الصوت كلمة بكلمة لجميع السور؟ قد يستهلك هذا مساحة تخزين وبيانات جوال بشكل كبير.</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">انتظر حتى تنتهي تنزيلات السور الفردية قبل تنزيل الكل.</string>
+    <string name="wbwAudioChapterWaitForBulk">انتظر حتى يكتمل التنزيل الشامل قبل تنزيل سورة واحدة.</string>
+    <string name="ontologyExplorer">مستكشف موضوعات القرآن</string>
+    <string name="thematicTopics">الموضوعات حسب التصنيف</string>
+    <string name="englishContentOnly">محتوى هذه الصفحة متاح باللغة الإنجليزية فقط.</string>
+    <string name="estimatedSize">الحجم التقريبي: %s</string>
 </resources>

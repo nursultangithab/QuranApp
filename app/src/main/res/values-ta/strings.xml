@@ -230,7 +230,7 @@
     <string name="labelFreeUpSpace">இலவச இடம்</string>
     <string name="msgDeleteTranslation" formatted="false">%1$s\n %2$s\n\n நீங்கள் அதை மீண்டும் பதிவிறக்கம் செய்ய வேண்டும்.</string>
     <string name="titleRecitationCleanup">பாராயணத்தை நீக்கவா?</string>
-    <string name="msgRecitationCleanup" formatted="false">%s இலிருந்து சேமிக்கப்பட்ட அனைத்து பாராயணங்களும் நீக்கப்படும்.</string>
+    <string name="msgRecitationCleanup" formatted="false">%s இலிருந்து சேமிக்கப்பட்ட அனைத்து பாராயணங்களும் நீக்கப்படும். தனிப்பட்ட முறையில் சூரா வாரியாக பாராயணங்களை நீக்க, அமைப்புகளுக்குச் செல்லவும்।</string>
     <string name="titleScriptCleanup">ச்கிரிப்டை நீக்கவா?</string>
     <string name="msgScriptCleanup" formatted="false">%s ஸ்கிரிப்ட் மற்றும் அதன் சேமிக்கப்பட்ட அனைத்து எழுத்துருக்களும் நீக்கப்படும். அவற்றைப் பயன்படுத்த நீங்கள் மீண்டும் பதிவிறக்க வேண்டும்.</string>
     <string name="nScriptsAndFonts" formatted="false">%1$d ச்கிரிப்டுகள் மற்றும் %2$d எழுத்துருக்கள்</string>
@@ -387,6 +387,7 @@
     <string name="playWord">வார்த்தையை ஒலி</string>
     <string name="previousWord">முந்தைய வார்த்தை</string>
     <string name="nextWord">அடுத்த வார்த்தை</string>
+    <string name="wbwSelectLanguage">வார்த்தைக்கு வார்த்தை மொழியைத் தேர்ந்தெடு</string>
     <string name="results">முடிவுகள்</string>
     <string name="titleRecentSearches">சமீபத்திய தேடல்கள்</string>
     <string name="searchInQuran">குர்ஆனில் தேடு</string>
@@ -403,5 +404,31 @@
     <string name="discord">டிஸ்கார்ட்</string>
     <string name="strTitleDownloadSunnahApp">SunnahApp-ஐ பதிவிறக்கவும்</string>
     <string name="tajweedColors">தஜ்வீதின் நிறங்கள்</string>
-</resources>
+    <string name="similarVerses">ஒத்த ஆயத்துகள்</string>
+    <string name="noSimilarVerses">இந்த ஆயத்துக்கு ஒத்த ஆயத்துகள் இல்லை.</string>
+    <string name="countSimilarVerses" formatted="false">%1$s-க்கு %2$d ஒத்த ஆயத்துகள் உள்ளன</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% பொருத்தம் · மதிப்பெண் %2$d</string>
+    <string name="moreOptions">மேலும் விருப்பங்கள்</string>
+    <string name="whenChapterEnds">ஸூரா முடியும் போது</string>
+    <string name="whenChapterEndsDesc">தற்போதைய ஸூரா ஒலிபரப்பு முடிந்த பின் என்ன நடக்க வேண்டும் என்பதை தேர்வு செய்யவும்.</string>
+    <string name="stopPlayback">இயக்கத்தை நிறுத்து</string>
+    <string name="playNextSurah">அடுத்த ஸூராவை இயக்கு</string>
+    <string name="repeatCurrentSurah">தற்போதைய ஸூராவை மீண்டும் இயக்கு</string>
+    <string name="reset">மீட்டமை</string>
+    <string name="selectAll">அனைத்தையும் தேர்ந்தெடு</string>
+    <string name="filterTranslationsDisabledNote">அரபு தேடல் இயக்கத்தில் இருக்கும்போது மொழிபெயர்ப்புகளில் தேடப்படாது.</string>
+    <string name="filterTranslationsEmpty">இதுவரை மொழிபெயர்ப்புகள் எதுவும் பதிவிறக்கப்படவில்லை.</string>
 
+    <string name="wbwAudioTimingsCouldNotLoad">சொல் நேர அட்டவணையை ஏற்ற முடியவில்லை. இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.</string>
+    <string name="wbwAudioCouldNotPlay">சொல் ஒலியை இயக்க முடியவில்லை.</string>
+    <string name="wbwAudioDownloadHint">ஆஃப்லைனில் கேட்கவும் சீரான இயக்கத்திற்கும் சொல்-சொல்லாக ஒலியைப் பதிவிறக்கவும்.</string>
+    <string name="wbwAudio">சொல்-சொல்லாக ஒலி</string>
+    <string name="wbwAudioDownloadAll">அனைத்தையும் பதிவிறக்கவும்</string>
+    <string name="wbwAudioDownloadAllConfirm">அனைத்து ஸூராக்களுக்கும் சொல்-சொல்லாக திலாவத் ஒலியைப் பதிவிறக்கவா? இது அதிக சேமிப்பு மற்றும் மொபைல் டேட்டாவை பயன்படுத்தலாம்.</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">அனைத்தையும் பதிவிறக்குவதற்கு முன் தனித் ஸூராக்களின் பதிவிறக்கம் முடியும் வரை காத்திருக்கவும்.</string>
+    <string name="wbwAudioChapterWaitForBulk">ஒரு ஸூராவைப் பதிவிறக்குவதற்கு முன் முழு பதிவிறக்கம் முடியும் வரை காத்திருக்கவும்.</string>
+    <string name="ontologyExplorer">தலைப்பு ஆராய்ச்சி</string>
+    <string name="thematicTopics">கருப்பொருள் அடிப்படையிலான தலைப்புகள்</string>
+    <string name="englishContentOnly">இந்தப் பக்கத்தின் உள்ளடக்கம் ஆங்கில மொழியில் மட்டுமே கிடைக்கும்.</string>
+    <string name="estimatedSize">மதிப்பிடப்பட்ட அளவு: %s</string>
+</resources>

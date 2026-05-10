@@ -7,6 +7,7 @@ import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.sp
@@ -18,7 +19,16 @@ val appFontFamily = FontFamily.Default
 val fontUrdu by lazy {
     FontFamily(
         Font(
-            R.font.noto_nastaliq_urdu_variable,
+            R.font.noto_nastaliq_urdu_regular,
+            weight = FontWeight.Normal,
+        ),
+    )
+}
+
+val fontArabic by lazy {
+    FontFamily(
+        Font(
+            R.font.scheherazadenew_regular,
             weight = FontWeight.Normal,
         ),
     )
@@ -85,7 +95,7 @@ fun getAppTypography(): Typography {
             platformStyle = platformTextStyle,
             fontFamily = titleFont,
             fontWeight = FontWeight.Bold,
-            fontSize = 22.sp,
+            fontSize = 20.sp,
             lineHeight = 28.sp,
             letterSpacing = 0.sp
         ),
@@ -93,7 +103,7 @@ fun getAppTypography(): Typography {
             platformStyle = platformTextStyle,
             fontFamily = titleFont,
             fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
+            fontSize = 17.sp,
             lineHeight = 24.sp,
             letterSpacing = 0.sp
         ),
@@ -101,14 +111,14 @@ fun getAppTypography(): Typography {
             platformStyle = platformTextStyle,
             fontFamily = titleFont,
             fontWeight = FontWeight.Bold,
-            fontSize = 16.sp,
+            fontSize = 15.sp,
             lineHeight = 20.sp,
             letterSpacing = 0.sp
         ),
         labelLarge = TextStyle(
             platformStyle = platformTextStyle,
             fontFamily = baseFont,
-            fontWeight = FontWeight.Medium,
+            fontWeight = FontWeight.Bold,
             fontSize = 15.sp,
             lineHeight = 20.sp,
             letterSpacing = 0.sp

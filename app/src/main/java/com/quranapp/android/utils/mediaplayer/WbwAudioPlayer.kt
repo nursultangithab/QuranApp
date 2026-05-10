@@ -1,90 +1,109 @@
 package com.quranapp.android.utils.mediaplayer
 
 import android.content.Context
-import android.net.Uri
+import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.ExoPlayer
-import com.quranapp.android.api.RetrofitInstance
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.quranapp.android.utils.Log
-import com.quranapp.android.utils.univ.StringUtils
-import kotlinx.coroutines.Dispatchers
+import com.quranapp.android.utils.receivers.NetworkStateReceiver
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.IOException
 
+@OptIn(UnstableApi::class)
 object WbwAudioPlayer {
-
-    private const val BASE = "https://audio.qurancdn.com/wbw/"
-    private const val CACHE_SUBDIR = "wbw_audio"
-
     private val mutex = Mutex()
     private var player: ExoPlayer? = null
+    private const val ONE_OFF_CACHE_MAX_BYTES = 16L * 1024 * 1024
 
-    private fun segment(n: Int): String = StringUtils.formatInvariant("%03d", n)
+    @Volatile
+    private var oneOffSimpleCache: SimpleCache? = null
 
-    private fun buildUrl(chapterNo: Int, verseNo: Int, urlWordIndex: Int): String =
-        "$BASE${segment(chapterNo)}_${segment(verseNo)}_${segment(urlWordIndex)}.mp3"
+    private val oneOffCacheLock = Any()
 
-    private fun cacheFile(context: Context, chapterNo: Int, verseNo: Int, urlWordIndex: Int): File {
-        val dir = File(context.cacheDir, CACHE_SUBDIR).apply { mkdirs() }
-        return File(dir, "${segment(chapterNo)}_${segment(verseNo)}_${segment(urlWordIndex)}.mp3")
-    }
+    private fun oneOffCache(context: Context): SimpleCache {
+        synchronized(oneOffCacheLock) {
+            oneOffSimpleCache?.let { return it }
 
-    private suspend fun downloadIfMissing(file: File, url: String) {
-        if (file.exists() && file.length() > 0L) return
-        val dir = file.parentFile ?: return
-        dir.mkdirs()
-        val tmp = File(dir, "${file.name}.tmp")
-
-        withContext(Dispatchers.IO) {
-            val response = RetrofitInstance.any.downloadStreaming(url)
-
-            if (!response.isSuccessful) {
-                throw IOException("Wbw audio failed: HTTP ${response.code()}")
+            val app = context.applicationContext
+            val dir = File(app.cacheDir, "exo_wbw_one_off_cache")
+            if (!dir.exists()) {
+                dir.mkdirs()
             }
 
-            val body = response.body() ?: throw IOException("Wbw audio body is null")
+            val evictor = LeastRecentlyUsedCacheEvictor(ONE_OFF_CACHE_MAX_BYTES)
+            val dbProvider = StandaloneDatabaseProvider(app)
 
-            body.byteStream().use { input ->
-                tmp.outputStream().buffered().use { output ->
-                    input.copyTo(output)
-                }
+            return SimpleCache(dir, evictor, dbProvider).also {
+                oneOffSimpleCache = it
             }
-        }
-
-        if (!tmp.renameTo(file)) {
-            tmp.delete()
-            throw IOException("Wbw audio could not finalize cache file")
         }
     }
 
     private fun getOrCreatePlayer(context: Context): ExoPlayer {
         player?.let { return it }
-        val app = context.applicationContext
 
-        return ExoPlayer.Builder(app).build().apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(C.USAGE_MEDIA)
-                    .setContentType(C.AUDIO_CONTENT_TYPE_SPEECH)
-                    .build(),
-                true,
-            )
-            repeatMode = Player.REPEAT_MODE_OFF
-            addListener(
-                object : Player.Listener {
-                    override fun onPlayerError(error: PlaybackException) {
-                        Log.saveError(error, "WbwWordAudioPlayer")
-                    }
-                },
-            )
-        }.also { player = it }
+        val app = context.applicationContext
+        val cacheDataSourceFactory = CacheDataSource.Factory()
+            .setCache(oneOffCache(app))
+            .setUpstreamDataSourceFactory(DefaultHttpDataSource.Factory())
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+
+        val dataSourceFactory = DefaultDataSource.Factory(app, cacheDataSourceFactory)
+        val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
+
+        return ExoPlayer.Builder(app)
+            .setMediaSourceFactory(mediaSourceFactory)
+            .build()
+            .apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(C.USAGE_MEDIA)
+                        .setContentType(C.AUDIO_CONTENT_TYPE_SPEECH)
+                        .build(),
+                    true,
+                )
+
+                repeatMode = Player.REPEAT_MODE_OFF
+
+                addListener(
+                    object : Player.Listener {
+                        override fun onPlayerError(error: PlaybackException) {
+                            Log.saveError(error, "WbwWordAudioPlayer")
+                        }
+                    },
+                )
+            }.also { player = it }
+    }
+
+    private fun isValidTimingWindow(startMs: Long, endMs: Long): Boolean {
+        if (
+            startMs == C.TIME_UNSET ||
+            endMs == C.TIME_UNSET ||
+            startMs < 0L ||
+            endMs < 0L ||
+            endMs <= startMs
+        ) {
+            return false
+        }
+
+        return try {
+            Math.subtractExact(endMs, startMs) > 0L
+        } catch (_: ArithmeticException) {
+            false
+        }
     }
 
     suspend fun play(
@@ -92,52 +111,113 @@ object WbwAudioPlayer {
         chapterNo: Int,
         verseNo: Int,
         appWordIndex: Int,
-    ) {
-        val (file, url) = buildUrlAndFile(context, chapterNo, verseNo, appWordIndex)
+    ): WbwAudioPlayResult {
+        val app = context.applicationContext
 
-        mutex.withLock {
-            try {
-                downloadIfMissing(file, url)
-            } catch (e: Exception) {
-                Log.saveError(e, "WbwWordAudioPlayer.play")
-                return
+        val source = WbwAudioRepository.resolveWordPlaybackSource(
+            context = context,
+            chapterNo = chapterNo,
+            verseNo = verseNo,
+            appWordIndex = appWordIndex,
+        )
+
+        if (source == null) {
+            return if (!NetworkStateReceiver.isNetworkConnected(app)) {
+                WbwAudioPlayResult.NoInternet
+            } else {
+                WbwAudioPlayResult.NoChapterAudio
+            }
+        }
+
+        Log.d("Wbw Audio Source", source)
+
+        when (source) {
+            is WbwWordPlaybackSource.OneOff -> {
+                mutex.withLock {
+                    val exo = getOrCreatePlayer(context).apply {
+                        stop()
+                        clearMediaItems()
+                        setMediaItem(
+                            MediaItem.Builder()
+                                .setUri(source.uri)
+                                .build(),
+                        )
+                    }
+
+                    exo.prepare()
+                    exo.playWhenReady = true
+                }
             }
 
-            val p = getOrCreatePlayer(context)
-            p.stop()
-            p.clearMediaItems()
-            p.setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
-            p.prepare()
-            p.playWhenReady = true
+            is WbwWordPlaybackSource.Chapter -> {
+                if (
+                    WbwAudioRepository.getTimingCount(context) == 0 &&
+                    !NetworkStateReceiver.isNetworkConnected(app)
+                ) {
+                    return WbwAudioPlayResult.NoInternet
+                }
+
+                val timing =
+                    WbwAudioRepository.getWordTiming(context, chapterNo, verseNo, appWordIndex)
+
+                if (timing == null) {
+                    val count = WbwAudioRepository.getTimingCount(context)
+
+                    return when {
+                        count == 0 && !NetworkStateReceiver.isNetworkConnected(app) ->
+                            WbwAudioPlayResult.NoInternet
+
+                        else -> WbwAudioPlayResult.TimingsNotLoaded
+                    }
+                }
+
+                if (!isValidTimingWindow(timing.startMillis, timing.endMillis)) {
+                    Log.saveError(
+                        Exception("Invalid WBW timing window ${timing.startMillis}–${timing.endMillis}"),
+                        "WbwAudioPlayer.play",
+                    )
+                    return WbwAudioPlayResult.InvalidTiming
+                }
+
+                mutex.withLock {
+                    val exo = getOrCreatePlayer(context).apply {
+                        stop()
+                        clearMediaItems()
+                        setMediaItem(
+                            MediaItem.Builder()
+                                .setUri(source.uri)
+                                .setClippingConfiguration(
+                                    MediaItem.ClippingConfiguration.Builder()
+                                        .setStartPositionMs(timing.startMillis)
+                                        .setEndPositionMs(timing.endMillis)
+                                        .build(),
+                                )
+                                .build(),
+                        )
+                    }
+
+                    exo.prepare()
+                    exo.playWhenReady = true
+                }
+            }
         }
+
+        return WbwAudioPlayResult.Success
     }
 
-    suspend fun warmUp(
-        context: Context,
-        chapterNo: Int,
-        verseNo: Int,
-        appWordIndex: Int,
-    ) {
-        val (file, url) = buildUrlAndFile(context, chapterNo, verseNo, appWordIndex)
-
+    suspend fun warmUp(context: Context) {
         try {
-            downloadIfMissing(file, url)
+            WbwAudioRepository.ensureTimingsAvailable(context)
         } catch (e: Exception) {
-            Log.saveError(e, "WbwWordAudioPlayer.warmUp")
-            return
+            Log.saveError(e, "WbwAudioPlayer.warmUp")
         }
     }
+}
 
-    private fun buildUrlAndFile(
-        context: Context,
-        chapterNo: Int,
-        verseNo: Int,
-        appWordIndex: Int,
-    ): Pair<File, String> {
-        val urlWordIndex = appWordIndex + 1
-        val file = cacheFile(context.applicationContext, chapterNo, verseNo, urlWordIndex)
-        val url = buildUrl(chapterNo, verseNo, urlWordIndex)
-
-        return file to url
-    }
+sealed class WbwAudioPlayResult {
+    data object Success : WbwAudioPlayResult()
+    data object NoInternet : WbwAudioPlayResult()
+    data object TimingsNotLoaded : WbwAudioPlayResult()
+    data object InvalidTiming : WbwAudioPlayResult()
+    data object NoChapterAudio : WbwAudioPlayResult()
 }

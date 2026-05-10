@@ -11,35 +11,40 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.quranapp.android.compose.navigation.LocalSettingsNavHostController
 import com.quranapp.android.compose.navigation.SettingRoutes
 import com.quranapp.android.utils.univ.Keys
 
 
-val enterTransition = slideInHorizontally(
-    initialOffsetX = { fullWidth -> fullWidth }, animationSpec = tween(durationMillis = 100)
+private val enterTransition = slideInHorizontally(
+    initialOffsetX = { fullWidth -> fullWidth },
+    animationSpec = tween(durationMillis = 100),
 )
-val exitTransition = slideOutHorizontally(
-    targetOffsetX = { fullWidth -> -fullWidth }, animationSpec = tween(durationMillis = 100)
+private val exitTransition = slideOutHorizontally(
+    targetOffsetX = { fullWidth -> -fullWidth },
+    animationSpec = tween(durationMillis = 100),
 )
-val popEnterTransition = slideInHorizontally(
-    initialOffsetX = { fullWidth -> -fullWidth }, animationSpec = tween(durationMillis = 100)
+private val popEnterTransition = slideInHorizontally(
+    initialOffsetX = { fullWidth -> -fullWidth },
+    animationSpec = tween(durationMillis = 100),
 )
-val popExitTransition = slideOutHorizontally(
-    targetOffsetX = { fullWidth -> fullWidth }, animationSpec = tween(durationMillis = 100)
+private val popExitTransition = slideOutHorizontally(
+    targetOffsetX = { fullWidth -> fullWidth },
+    animationSpec = tween(durationMillis = 100),
 )
 
-private fun NavGraphBuilder.route(
+fun NavGraphBuilder.route(
     route: String,
     arguments: List<NamedNavArgument> = emptyList(),
     deepLinks: List<NavDeepLink> = emptyList(),
@@ -55,6 +60,10 @@ private fun NavGraphBuilder.route(
         popExitTransition = { popExitTransition },
         content = content
     )
+}
+
+val LocalSettingsNavController = compositionLocalOf<NavHostController> {
+    error("NavHostController is not provided")
 }
 
 @Composable
@@ -77,9 +86,10 @@ fun SettingsScreen(intent: Intent?, isNewIntent: Boolean) {
     val startDestination = intent?.getStringExtra(Keys.NAV_DESTINATION)
         ?: SettingRoutes.MAIN.arg(false)
 
-    CompositionLocalProvider(LocalSettingsNavHostController provides navController) {
+    CompositionLocalProvider(LocalSettingsNavController provides navController) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             NavHost(
+                modifier = Modifier.fillMaxSize(),
                 navController = navController,
                 startDestination = startDestination,
             ) {
@@ -100,9 +110,7 @@ fun SettingsScreen(intent: Intent?, isNewIntent: Boolean) {
                 route(SettingRoutes.SCRIPT) { ScriptsScreen() }
                 route(SettingRoutes.WWB) { SettingsWbwScreen() }
                 route(SettingRoutes.RECITATION_DOWNLOAD) { RecitationDownloadScreen() }
-                route(SettingRoutes.APP_LOGS) {
-                    AppLogsScreen()
-                }
+                route(SettingRoutes.APP_LOGS) { AppLogsScreen() }
             }
         }
     }

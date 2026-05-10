@@ -62,7 +62,8 @@ import com.quranapp.android.compose.components.dialogs.SimpleTooltip
 import com.quranapp.android.compose.components.reader.dialogs.BookmarkViewerData
 import com.quranapp.android.compose.components.reader.dialogs.BookmarkViewerSheet
 import com.quranapp.android.compose.theme.alpha
-import com.quranapp.android.db.entities.BookmarkEntity
+import com.quranapp.android.compose.utils.formattedStringResource
+import com.quranapp.android.db.entities.user.BookmarkEntity
 import com.quranapp.android.viewModels.BookmarksViewModel
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -119,7 +120,7 @@ fun BookmarksScreen(vm: BookmarksViewModel = viewModel()) {
         topBar = {
             AppBar(
                 title = if (selecting) {
-                    stringResource(R.string.strLabelSelectedCount, selectedIds.size)
+                    formattedStringResource(R.string.strLabelSelectedCount, selectedIds.size)
                 } else {
                     stringResource(R.string.strTitleBookmarks)
                 }, actions = {
@@ -300,7 +301,7 @@ private fun BookmarkItemCard(
                     } else {
                         Text(
                             bookmark.chapterNo.toString(),
-                            style = MaterialTheme.typography.titleLarge.copy(
+                            style = MaterialTheme.typography.bodyLarge.copy(
                                 fontWeight = FontWeight.Light
                             ),
                         )
@@ -317,7 +318,7 @@ private fun BookmarkItemCard(
                         else chapterName + ": " + stringResource(
                             R.string.strLabelVerses, bookmark.fromVerseNo, bookmark.toVerseNo
                         ),
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.labelLarge,
                     )
 
                     Text(

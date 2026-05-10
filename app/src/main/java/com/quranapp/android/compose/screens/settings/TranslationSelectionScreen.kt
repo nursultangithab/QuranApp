@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -63,7 +64,6 @@ import com.quranapp.android.components.transls.TranslationGroupModel
 import com.quranapp.android.compose.components.common.AppBar
 import com.quranapp.android.compose.components.common.ErrorMessageCard
 import com.quranapp.android.compose.components.common.IconButton
-import com.quranapp.android.compose.navigation.LocalSettingsNavHostController
 import com.quranapp.android.compose.navigation.SettingRoutes
 import com.quranapp.android.utils.reader.TranslUtils
 import com.quranapp.android.utils.univ.MessageUtils
@@ -223,7 +223,7 @@ private fun LanguageGroupCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = group.langName,
-                                style = MaterialTheme.typography.titleSmall,
+                                style = MaterialTheme.typography.labelLarge,
                                 color = colorScheme.primary,
                                 fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
@@ -315,6 +315,7 @@ private fun TranslationRow(
     onDelete: () -> Unit
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val bookInfo = translation.bookInfo
 
     Row(
@@ -385,13 +386,13 @@ private fun TranslationRow(
                     onClick = {
                         MessageUtils.showConfirmationDialog(
                             context = context,
-                            title = context.getString(R.string.strTitleTranslDelete),
-                            msg = context.getString(
+                            title = resources.getString(R.string.strTitleTranslDelete),
+                            msg = resources.getString(
                                 R.string.msgDeleteTranslation,
                                 bookInfo.bookName,
                                 bookInfo.authorName
                             ),
-                            btn = context.getString(R.string.strLabelDelete),
+                            btn = resources.getString(R.string.strLabelDelete),
                             btnColor = ColorUtils.DANGER,
                             action = {
                                 onDelete()
@@ -412,7 +413,7 @@ private fun TranslationRow(
 
 @Composable
 private fun DownloadTranslationsButton() {
-    val navController = LocalSettingsNavHostController.current
+    val navController = LocalSettingsNavController.current
 
     Box(
         modifier = Modifier
@@ -442,7 +443,7 @@ private fun DownloadTranslationsButton() {
 
             Text(
                 text = stringResource(R.string.strTitleDownloadTranslations),
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onPrimary
             )

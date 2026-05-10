@@ -1,6 +1,6 @@
 package com.quranapp.android.compose.screens.settings
 
-import ThemeUtils
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,8 +30,11 @@ import com.quranapp.android.compose.components.settings.ListItemCategoryLabel
 import com.quranapp.android.compose.components.settings.ResourceDownloadSrcSheet
 import com.quranapp.android.compose.components.settings.SettingsItem
 import com.quranapp.android.compose.components.settings.TextSizeSheet
-import com.quranapp.android.compose.navigation.LocalSettingsNavHostController
 import com.quranapp.android.compose.navigation.SettingRoutes
+import com.quranapp.android.compose.utils.LocalAppLocale
+import com.quranapp.android.compose.utils.ThemeUtils
+import com.quranapp.android.compose.utils.formatString
+import com.quranapp.android.compose.utils.formattedStringResource
 import com.quranapp.android.compose.utils.preferences.ReaderPreferences
 import com.quranapp.android.compose.utils.preferences.VersePreferences
 import com.quranapp.android.utils.app.DownloadSourceUtils
@@ -40,7 +44,6 @@ import com.quranapp.android.utils.reader.getQuranScriptName
 import com.quranapp.android.utils.reader.getQuranScriptVariantName
 import com.quranapp.android.utils.reader.tafsir.TafsirManager
 import com.quranapp.android.utils.sharedPrefs.SPAppConfigs
-import java.util.Locale
 import kotlinx.coroutines.launch
 
 @Composable
@@ -48,12 +51,13 @@ fun SettingsMainScreen(
     showReaderSettingsOnly: Boolean
 ) {
     val context = LocalContext.current
-    val navController = LocalSettingsNavHostController.current
+    val navController = LocalSettingsNavController.current
     val coroutineScope = rememberCoroutineScope()
+    val appLocale = LocalAppLocale.current
 
-    var showDailyReminderSheet by remember { mutableStateOf(false) }
-    var showTextSizesSheet by remember { mutableStateOf(false) }
-    var showResourceDownloadSrcSheet by remember { mutableStateOf(false) }
+    var showDailyReminderSheet by rememberSaveable { mutableStateOf(false) }
+    var showTextSizesSheet by rememberSaveable { mutableStateOf(false) }
+    var showResourceDownloadSrcSheet by rememberSaveable { mutableStateOf(false) }
 
     val selectedLanguage = remember(context) {
         val availableLocalesValues = context.getStringArray(R.array.availableLocalesValues)
@@ -138,8 +142,9 @@ fun SettingsMainScreen(
             SettingsItem(
                 title = R.string.textSizes,
                 icon = R.drawable.icon_font_size,
-                subtitleStr = String.format(
-                    Locale.getDefault(),
+                subtitleStr = formatString(
+                    context,
+                    appLocale,
                     $$"%1$s: %2$d%%, %3$s: %4$d%%",
                     stringResource(R.string.labelArabic),
                     ReaderTextSizeUtils.calculateProgressText(arabicTextSizeMult),
@@ -151,7 +156,7 @@ fun SettingsMainScreen(
             SettingsItem(
                 title = R.string.strTitleTranslations,
                 icon = R.drawable.dr_icon_translations,
-                subtitleStr = stringResource(R.string.strLabelSelectedCount, slugs.size)
+                subtitleStr = formattedStringResource(R.string.strLabelSelectedCount, slugs.size)
             ) {
                 navController.navigate(SettingRoutes.TRANSLATIONS)
             }
@@ -187,15 +192,15 @@ fun SettingsMainScreen(
                 navController.navigate(SettingRoutes.WWB)
             }
 
-            SettingsItem(
-                title = R.string.downloadRecitations,
-                icon = R.drawable.dr_icon_download,
-            ) {
-                navController.navigate(SettingRoutes.RECITATION_DOWNLOAD)
-            }
-
             if (!showReaderSettingsOnly) {
                 ListItemCategoryLabel(title = stringResource(R.string.titleOtherSettings))
+
+                SettingsItem(
+                    title = R.string.downloadRecitations,
+                    icon = R.drawable.dr_icon_download,
+                ) {
+                    navController.navigate(SettingRoutes.RECITATION_DOWNLOAD)
+                }
 
                 SettingsItem(
                     title = R.string.titleResourceDownloadSource,

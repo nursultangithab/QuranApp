@@ -7,7 +7,7 @@
         "displayName": "Hilali & Khan",
         "langCode": "en",
         "langName": "English",
-        "lastUpdated": 1658517131580,
+        "lastUpdated": 1777403767704,
         "downloadPath": "inventory/translations/en/en_hilali-khan.json"
       },
       "en_pickthall": {
@@ -70,7 +70,7 @@
         "displayName": "Tafhim-ul-Quran",
         "langCode": "en",
         "langName": "English",
-        "lastUpdated": 1658517131580,
+        "lastUpdated": 1777403767704,
         "downloadPath": "inventory/translations/en/en_maududi.json"
       },
       "en_abdul-haleem": {
@@ -79,7 +79,7 @@
         "displayName": "Abdul Haleem",
         "langCode": "en",
         "langName": "English",
-        "lastUpdated": 1681409892464,
+        "lastUpdated": 1777403767704,
         "downloadPath": "inventory/translations/en/en_abdul-haleem.json"
       }
     },
@@ -161,7 +161,7 @@
         "displayName": "Hamidullah",
         "langCode": "fr",
         "langName": "Français",
-        "lastUpdated": 1680108109569,
+        "lastUpdated": 1777403767704,
         "downloadPath": "inventory/translations/fr/fr_hamidullah.json"
       },
       "fr_rashid": {
@@ -183,6 +183,17 @@
         "langName": "ગુજરાતી",
         "lastUpdated": 1681979248037,
         "downloadPath": "inventory/translations/gu/gu_omari.json"
+      }
+    },
+    "ha": {
+      "ha_gummi": {
+        "book": "Abu Bakr Jumi",
+        "author": "Abu Bakr Jumi",
+        "displayName": "Abu Bakr Jumi",
+        "langCode": "ha",
+        "langName": "Hausa",
+        "lastUpdated": 1778150224802,
+        "downloadPath": "inventory/translations/ha/ha_gummi.json"
       }
     },
     "hi": {
@@ -232,7 +243,7 @@
         "displayName": "Hamza Roberto Piccardo",
         "langCode": "it",
         "langName": "Italiano",
-        "lastUpdated": 1763890370852,
+        "lastUpdated": 1777403767704,
         "downloadPath": "inventory/translations/it/it_piccardo.json"
       }
     },
@@ -325,7 +336,7 @@
         "langName": "Кыргызча",
         "lastUpdated": 1774293143000,
         "downloadPath": "inventory/translations/ky/ky_shamsudin-hakimov.json"
-        }
+      }
     },
     "sd": {
       "sd_taj-mehmood-amroti": {
@@ -376,6 +387,15 @@
         "langName": "Тоҷикӣ",
         "lastUpdated": 1767970786093,
         "downloadPath": "inventory/translations/tg/tg_rowwad.json"
+      },
+      "tg_tajik": {
+        "book": "Tajik",
+        "author": "Tajik",
+        "displayName": "Tajik",
+        "langCode": "tg",
+        "langName": "Тоҷикӣ",
+        "lastUpdated": 1777380274050,
+        "downloadPath": "inventory/translations/tg/tg_tajik.json"
       }
     },
     "tr": {
@@ -424,7 +444,7 @@
         "displayName": "تفہيم القرآن",
         "langCode": "ur",
         "langName": "اردو",
-        "lastUpdated": 1658517131580,
+        "lastUpdated": 1777403767704,
         "downloadPath": "inventory/translations/ur/ur_maududi.json"
       }
     },
@@ -439,6 +459,17 @@
         "downloadPath": "inventory/translations/uk/uk_mikhailo.json"
       }
     },
+    "yo": {
+      "yo_mikail": {
+        "book": "Abu Rahimah Mikael",
+        "author": "Abu Rahimah Mikael",
+        "displayName": "Abu Rahimah Mikael",
+        "langCode": "yo",
+        "langName": "Yoruba",
+        "lastUpdated": 1778150224802,
+        "downloadPath": "inventory/translations/yo/yo_mikail.json"
+      }
+    },
     "zh": {
       "zh_majian": {
         "book": "马坚译本",
@@ -446,7 +477,7 @@
         "displayName": "马坚译本",
         "langCode": "zh",
         "langName": "简体中文",
-        "lastUpdated": 1762959566114,
+        "lastUpdated": 1777403767704,
         "downloadPath": "inventory/translations/zh/zh_majian.json"
       }
     }

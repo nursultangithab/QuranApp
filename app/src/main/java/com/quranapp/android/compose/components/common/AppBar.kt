@@ -52,8 +52,8 @@ import com.quranapp.android.compose.components.dialogs.SimpleTooltip
 fun AppBar(
     title: String? = null,
     titleContent: (@Composable () -> Unit)? = null,
-    bgColor: Color? = null,
-    color: Color? = null,
+    bgColor: Color = colorScheme.surfaceContainer,
+    color: Color = colorScheme.onSurface,
     searchQuery: String = "",
     onSearchQueryChange: ((String) -> Unit)? = null,
     searchPlaceholder: String? = null,
@@ -81,11 +81,11 @@ fun AppBar(
     TopAppBar(
         modifier = Modifier.shadow(shadowElevation),
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = bgColor ?: colorScheme.surfaceContainer,
-            scrolledContainerColor = bgColor ?: colorScheme.surfaceContainer,
-            navigationIconContentColor = color ?: colorScheme.onSurface,
-            titleContentColor = color ?: colorScheme.onSurface,
-            actionIconContentColor = color ?: colorScheme.onSurface,
+            containerColor = bgColor,
+            scrolledContainerColor = bgColor,
+            navigationIconContentColor = color,
+            titleContentColor = color,
+            actionIconContentColor = color,
         ),
         title = {
             if (searchEnabled && searchExpanded) {
@@ -102,21 +102,11 @@ fun AppBar(
             }
         },
         navigationIcon = {
-            val backLabel = stringResource(R.string.strLabelBack)
-            SimpleTooltip(text = backLabel) {
-                IconButton(
-                    onClick = {
-                        if (searchEnabled && searchExpanded) {
-                            searchExpanded = false
-                        } else {
-                            backPressedDispatcher?.onBackPressed()
-                        }
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.dr_icon_arrow_left),
-                        contentDescription = backLabel,
-                    )
+            BackButton() {
+                if (searchEnabled && searchExpanded) {
+                    searchExpanded = false
+                } else {
+                    backPressedDispatcher?.onBackPressed()
                 }
             }
         },
@@ -217,4 +207,29 @@ fun AppBarSearchField(
             }
         }
     )
+}
+
+@Composable
+fun BackButton(
+    onClick: (() -> Unit)? = null
+) {
+    val backLabel = stringResource(R.string.strDescGoBack)
+    val backPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+
+    fun handleClick() {
+        if (onClick != null) onClick()
+        else backPressedDispatcher?.onBackPressed()
+    }
+
+
+    SimpleTooltip(text = backLabel) {
+        IconButton(
+            onClick = ::handleClick,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.dr_icon_arrow_left),
+                contentDescription = backLabel,
+            )
+        }
+    }
 }

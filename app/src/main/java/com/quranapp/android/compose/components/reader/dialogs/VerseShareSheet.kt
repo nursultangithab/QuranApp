@@ -5,8 +5,12 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
@@ -45,6 +49,7 @@ import com.quranapp.android.db.relations.VerseWithDetails
 import com.quranapp.android.compose.components.common.Chip
 import com.quranapp.android.compose.components.dialogs.BottomSheetHeader
 import com.quranapp.android.compose.theme.alpha
+import com.quranapp.android.compose.utils.formattedStringResource
 import com.quranapp.android.db.DatabaseProvider
 import com.quranapp.android.repository.QuranRepository
 import com.quranapp.android.utils.extensions.copyToClipboard
@@ -116,6 +121,7 @@ fun VerseShareSheet(
         scrimColor = colorScheme.scrim.alpha(0.5f),
         containerColor = colorScheme.surface,
         contentColor = colorScheme.onSurface,
+        contentWindowInsets = { WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom) },
     ) {
         Column(
             modifier = Modifier
@@ -128,6 +134,7 @@ fun VerseShareSheet(
 
             Column(
                 modifier = Modifier
+                    .weight(1f, false)
                     .padding(horizontal = 16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
@@ -249,7 +256,7 @@ private fun AdvancedShareForm(
 
     if (state.useVerseRange) {
         Text(
-            text = stringResource(R.string.strMsgShareRange, 1, vwd.chapter.surah.ayahCount),
+            text = formattedStringResource(R.string.strMsgShareRange, 1, vwd.chapter.surah.ayahCount),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 6.dp),

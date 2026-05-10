@@ -41,13 +41,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastCoerceAtLeast
 import com.quranapp.android.R
 import com.quranapp.android.compose.components.common.Loader
 import com.quranapp.android.compose.components.common.SearchTextField
+import com.quranapp.android.compose.components.reader.ReaderMode
 import com.quranapp.android.compose.theme.alpha
+import com.quranapp.android.compose.utils.formattedStringResource
 import com.quranapp.android.db.entities.quran.SurahEntity
 import com.quranapp.android.db.relations.SurahWithLocalizations
-import com.quranapp.android.utils.quran.QuranUtils
+import com.quranapp.android.utils.quran.QuranMeta
 import com.quranapp.android.viewModels.ReaderViewModel
 import com.quranapp.android.viewModels.ReaderViewType
 import verticalFadingEdge
@@ -59,19 +62,29 @@ fun ChapterNavigatorList(
     onVerseSelected: (Int, Int) -> Unit,
 ) {
     val surahs by readerVm.surahs.collectAsState()
-    val chapterViewState = readerVm.uiState.collectAsState().value.viewType as? ReaderViewType.Chapter
+    val readerMode by readerVm.readerMode.collectAsState()
+    val chapterViewState =
+        readerVm.uiState.collectAsState().value.viewType as? ReaderViewType.Chapter
 
     val mushafSession by readerVm.mushafSession.collectAsState()
     val currentMushafId = mushafSession.layout.toMushafId()
     val currentPageNo = mushafSession.currentPageNo
 
-    val activeChapterNo by produceState<Int?>(chapterViewState?.chapterNo, currentPageNo, currentMushafId) {
+    val activeChapterNo by produceState<Int?>(
+        chapterViewState?.chapterNo,
+        chapterViewState?.chapterNo,
+        currentPageNo,
+        currentMushafId
+    ) {
         value = when {
-            chapterViewState?.chapterNo != null -> chapterViewState.chapterNo
+            chapterViewState?.chapterNo != null && readerMode == ReaderMode.VerseByVerse -> chapterViewState.chapterNo
 
-            currentPageNo != null && currentMushafId > 0 -> {
-                val firstAyahId = readerVm.repository.getFirstAyahIdOnPage(currentMushafId, currentPageNo)
-                firstAyahId?.let { QuranUtils.getVerseNoFromAyahId(it).first }
+            currentPageNo != null -> {
+                val firstAyahId = readerVm.repository.getFirstAyahIdOnPage(
+                    currentMushafId, currentPageNo
+                )
+
+                firstAyahId?.let { QuranMeta.getVerseNoFromAyahId(it).first }
             }
 
             else -> null
@@ -88,6 +101,7 @@ fun ChapterNavigatorList(
             activeChapterNo,
             onChapterSelected,
         )
+
         ChapterVerseList(
             currentChapter = activeChapterNo?.let { surahs.getOrNull(it - 1) }?.surah,
             onVerseSelected = onVerseSelected
@@ -103,7 +117,7 @@ private fun RowScope.ChapterList(
     onChapterSelected: (Int) -> Unit
 ) {
     val gridState = rememberLazyGridState(
-        initialFirstVisibleItemIndex = activeChapterNo?.let { it - 1 } ?: 0,
+        initialFirstVisibleItemIndex = ((activeChapterNo ?: 1) - 1).fastCoerceAtLeast(0),
         initialFirstVisibleItemScrollOffset = -100
     )
 
@@ -122,8 +136,12 @@ private fun RowScope.ChapterList(
                 surah.surah.surahNo in surahNos
             }
 
-            gridState.requestScrollToItem(0)
+            gridState.scrollToItem(0)
         }
+    }
+
+    LaunchedEffect(activeChapterNo) {
+        gridState.scrollToItem(((activeChapterNo ?: 1) - 1).fastCoerceAtLeast(0))
     }
 
     Column(
@@ -193,7 +211,7 @@ private fun ChapterVerseList(currentChapter: SurahEntity?, onVerseSelected: (Int
                 ayahNo.toString().contains(query)
             }
 
-            state.requestScrollToItem(0)
+            state.scrollToItem(0)
         }
     }
 
@@ -241,7 +259,7 @@ private fun ChapterVerseList(currentChapter: SurahEntity?, onVerseSelected: (Int
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                     ) {
                         Text(
-                            stringResource(R.string.strLabelVerseNo, verseNo),
+                            formattedStringResource(R.string.strLabelVerseNo, verseNo),
                             modifier = Modifier
                                 .clickable {
                                     onVerseSelected(currentChapter.surahNo, verseNo)

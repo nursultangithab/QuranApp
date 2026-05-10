@@ -232,7 +232,7 @@
     <string name="labelFreeUpSpace">释放空间</string>
     <string name="msgDeleteTranslation" formatted="false">%1$s\n%2$s\n\n您需要重新下载。</string>
     <string name="titleRecitationCleanup">删除朗诵？</string>
-    <string name="msgRecitationCleanup" formatted="false">将删除 %s 中存储的所有朗诵。</string>
+    <string name="msgRecitationCleanup" formatted="false">将删除 %s 中存储的所有朗诵。如需按苏拉单独删除朗诵，请前往设置。</string>
     <string name="titleScriptCleanup">删除版本？</string>
     <string name="msgScriptCleanup" formatted="false">%s 个版本及其存储的所有字体将被删除。您需要重新下载才能使用它们。</string>
     <string name="nFiles" formatted="false">%d 个文件</string>
@@ -387,6 +387,7 @@
     <string name="playWord">播放单词</string>
     <string name="previousWord">上一个单词</string>
     <string name="nextWord">下一个单词</string>
+    <string name="wbwSelectLanguage">选择逐词语言</string>
     <string name="results">结果</string>
     <string name="titleRecentSearches">最近搜索</string>
     <string name="searchInQuran">在古兰经中搜索</string>
@@ -403,4 +404,31 @@
     <string name="discord">Discord</string>
     <string name="strTitleDownloadSunnahApp">下载 SunnahApp</string>
     <string name="tajweedColors">塔吉威德色彩</string>
+    <string name="similarVerses">相似经文</string>
+    <string name="noSimilarVerses">此节经文没有相似经文。</string>
+    <string name="countSimilarVerses" formatted="false">%1$s 有 %2$d 节相似经文</string>
+    <string name="similarVerseRowMeta" formatted="false">匹配度 %1$d%% · 得分 %2$d</string>
+    <string name="moreOptions">更多选项</string>
+    <string name="whenChapterEnds">当苏拉结束时</string>
+    <string name="whenChapterEndsDesc">选择当前苏拉播放结束后的操作。</string>
+    <string name="stopPlayback">停止播放</string>
+    <string name="playNextSurah">播放下一章苏拉</string>
+    <string name="repeatCurrentSurah">重复当前苏拉</string>
+    <string name="reset">重置</string>
+    <string name="selectAll">全选</string>
+    <string name="filterTranslationsDisabledNote">开启阿拉伯文搜索时，不会搜索译本。</string>
+    <string name="filterTranslationsEmpty">尚未下载任何译本。</string>
+
+    <string name="wbwAudioTimingsCouldNotLoad">词级时间轴加载失败。请检查网络后重试。</string>
+    <string name="wbwAudioCouldNotPlay">无法播放该词语音频。</string>
+    <string name="wbwAudioDownloadHint">下载逐词音频，可离线收听并获得更流畅的播放体验。</string>
+    <string name="wbwAudio">逐词音频</string>
+    <string name="wbwAudioDownloadAll">全部下载</string>
+    <string name="wbwAudioDownloadAllConfirm">要下载所有苏拉的逐词诵读音频吗？这可能会占用较多存储空间和移动数据。</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">请先等待单个苏拉下载完成，再执行全部下载。</string>
+    <string name="wbwAudioChapterWaitForBulk">请先等待完整下载结束，再下载单个苏拉。</string>
+    <string name="ontologyExplorer">主题导航</string>
+    <string name="thematicTopics">按主题分类</string>
+    <string name="englishContentOnly">本页面内容仅提供英文版本。</string>
+    <string name="estimatedSize">预计大小：%s</string>
 </resources>

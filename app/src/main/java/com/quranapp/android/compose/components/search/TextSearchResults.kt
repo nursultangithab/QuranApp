@@ -38,12 +38,14 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import com.alfaazplus.sunnah.ui.theme.appFontFamily
+import com.alfaazplus.sunnah.ui.theme.fontArabic
 import com.alfaazplus.sunnah.ui.theme.fontUrdu
 import com.quranapp.android.R
 import com.quranapp.android.compose.components.common.Loader
 import com.quranapp.android.compose.components.reader.dialogs.QuickReference
 import com.quranapp.android.compose.components.reader.dialogs.QuickReferenceData
 import com.quranapp.android.compose.theme.alpha
+import com.quranapp.android.compose.utils.formattedStringResource
 import com.quranapp.android.search.SearchResult
 import com.quranapp.android.search.SearchResultMatch
 import com.quranapp.android.utils.extensions.copyToClipboard
@@ -53,7 +55,11 @@ import com.quranapp.android.utils.univ.StringUtils
 import com.quranapp.android.viewModels.QuranSearchViewModel
 
 @Composable
-fun TextSearchResults(viewModel: QuranSearchViewModel, results: LazyPagingItems<SearchResult>) {
+fun TextSearchResults(
+    viewModel: QuranSearchViewModel,
+    results: LazyPagingItems<SearchResult>,
+    hasFilters: Boolean
+) {
     if (results.loadState.refresh is LoadState.Loading) {
         return Loader(true)
     }
@@ -64,7 +70,12 @@ fun TextSearchResults(viewModel: QuranSearchViewModel, results: LazyPagingItems<
             contentAlignment = Alignment.Center
         ) {
             Text(
-                stringResource(R.string.noResults),
+                stringResource(
+                    if (hasFilters)
+                        R.string.strMsgSearchNoResultsFoundAbsolute
+                    else
+                        R.string.noResults
+                ),
                 style = typography.labelLarge,
             )
         }
@@ -141,7 +152,7 @@ private fun TextSearchResultCard(result: SearchResult, onClick: (SearchResult) -
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = stringResource(
+                    text = formattedStringResource(
                         R.string.strLabelVerseSerial,
                         result.chapterNo,
                         result.verseNo
@@ -207,11 +218,11 @@ private fun TextSearchResultCard(result: SearchResult, onClick: (SearchResult) -
                             Text(
                                 modifier = Modifier.fillMaxWidth(),
                                 text = match.preview,
-                                style = typography.bodyMedium.copy(
-                                    textDirection = TextDirection.Rtl
+                                style = typography.bodyLarge.copy(
+                                    textDirection = TextDirection.Rtl,
+                                    fontFamily = fontArabic
                                 ),
                                 color = colorScheme.onSurface,
-                                maxLines = 4,
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }

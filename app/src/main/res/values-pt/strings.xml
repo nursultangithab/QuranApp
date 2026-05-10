@@ -216,7 +216,7 @@
     <string name="strTitleReadTafsirOfVerse" formatted="false">Ler o tafsir do versículo %d</string>
     <string name="strTitleSelectTafsir">Selecionar Tafsir</string>
     <string name="labelFreeUpSpace">Libertar espaço</string>
-    <string name="msgRecitationCleanup" formatted="false">Todas as recitações guardadas de %s serão apagadas.</string>
+    <string name="msgRecitationCleanup" formatted="false">Todas as recitações guardadas de %s serão apagadas. Para apagar recitações individualmente por sura, vá às definições.</string>
     <string name="titleScriptCleanup">Eliminar o script?</string>
     <string name="msgScriptCleanup" formatted="false">O script %s e todas as suas fontes armazenadas serão eliminados. Terá de voltar a descarregar para as utilizar.</string>
     <string name="titleReaderTextSizeTafsir">Tamanho do texto do Tafsir</string>
@@ -397,6 +397,7 @@
     <string name="playWord">Reproduzir palavra</string>
     <string name="previousWord">Palavra anterior</string>
     <string name="nextWord">Próxima palavra</string>
+    <string name="wbwSelectLanguage">Selecionar idioma palavra por palavra</string>
     <string name="results">Resultados</string>
     <string name="titleRecentSearches">Pesquisas recentes</string>
     <string name="searchInQuran">Pesquisar no Alcorão</string>
@@ -413,4 +414,31 @@
     <string name="discord">Discord</string>
     <string name="strTitleDownloadSunnahApp">Baixar SunnahApp</string>
     <string name="tajweedColors">Cores de Tajweed</string>
+    <string name="similarVerses">Versículos semelhantes</string>
+    <string name="noSimilarVerses">Não há versículos semelhantes para este versículo.</string>
+    <string name="countSimilarVerses" formatted="false">%1$s tem %2$d versículos semelhantes</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% de correspondência · pontuação %2$d</string>
+    <string name="moreOptions">Mais opções</string>
+    <string name="whenChapterEnds">Quando a surata terminar</string>
+    <string name="whenChapterEndsDesc">Escolha o que acontece após a surata atual terminar de tocar.</string>
+    <string name="stopPlayback">Parar reprodução</string>
+    <string name="playNextSurah">Tocar próxima surata</string>
+    <string name="repeatCurrentSurah">Repetir surata atual</string>
+    <string name="reset">Redefinir</string>
+    <string name="selectAll">Selecionar tudo</string>
+    <string name="filterTranslationsDisabledNote">As traduções não são pesquisadas enquanto a pesquisa em árabe estiver ativa.</string>
+    <string name="filterTranslationsEmpty">Ainda não há traduções baixadas.</string>
+
+    <string name="wbwAudioTimingsCouldNotLoad">Não foi possível carregar os tempos palavra por palavra. Verifique a ligação e tente novamente.</string>
+    <string name="wbwAudioCouldNotPlay">Não foi possível reproduzir o áudio da palavra.</string>
+    <string name="wbwAudioDownloadHint">Baixe o áudio palavra por palavra para ouvir offline e ter uma reprodução mais fluida.</string>
+    <string name="wbwAudio">Áudio palavra por palavra</string>
+    <string name="wbwAudioDownloadAll">Baixar tudo</string>
+    <string name="wbwAudioDownloadAllConfirm">Baixar o áudio de recitação palavra por palavra de todas as suratas? Isto pode consumir bastante armazenamento e dados móveis.</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">Aguarde o fim dos downloads de suratas individuais antes de baixar tudo.</string>
+    <string name="wbwAudioChapterWaitForBulk">Aguarde o download completo terminar antes de baixar uma única surata.</string>
+    <string name="ontologyExplorer">Explorador de temas</string>
+    <string name="thematicTopics">Tópicos por tema</string>
+    <string name="englishContentOnly">O conteúdo desta página está disponível apenas em inglês.</string>
+    <string name="estimatedSize">Tamanho estimado: %s</string>
 </resources>

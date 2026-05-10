@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.material3.Text
@@ -28,15 +27,19 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.quranapp.android.compose.components.common.Loader
 import com.quranapp.android.compose.components.reader.dialogs.WbwSheetData
 import com.quranapp.android.compose.theme.alpha
 import com.quranapp.android.db.entities.quran.AyahWordEntity
 import com.quranapp.android.db.entities.wbw.WbwWordEntity
+import com.quranapp.android.utils.reader.atlas.getForWord
 
 @Composable
 fun QuranTextWbw(
+    modifier: Modifier = Modifier,
     verseUi: ReaderLayoutItem.VerseUI,
-    onWordClick: ((AyahWordEntity) -> Unit)?
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
+    onWordClick: ((AyahWordEntity) -> Unit)? = null,
 ) {
     val wbwMap = verseUi.wbwByWordIndex ?: emptyMap()
     val textStyles = LocalQuranTextStyle.current
@@ -47,11 +50,10 @@ fun QuranTextWbw(
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         FlowRow(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = horizontalArrangement
         ) {
             for (word in verseUi.verse.words) {
                 val wbwForWord = wbwMap[word.wordIndex]
@@ -108,6 +110,7 @@ private fun QuranTextWbwWordCell(
     onWordClick: ((AyahWordEntity) -> Unit)?,
 ) {
     val arabicStyle = textStyles.quran(verseUi.verse.pageNo) ?: TextStyle.Default
+    val atlasPlacements = verseUi.atlasPlacements.getForWord(word)
 
     val dividerColor = colorScheme.outlineVariant
 
@@ -119,91 +122,83 @@ private fun QuranTextWbwWordCell(
         }
     }
 
-    if (word.isLastWordOfAyah) {
-        Text(
-            text = word.text,
-            style = arabicStyle,
-            modifier = Modifier.clickable { handleWordClick(word) },
-        )
-    } else {
-        val isThisWordLoading = wbwState.isWbwAudioLoading(
-            verseUi.verse.chapterNo,
-            verseUi.verse.verseNo,
-            word.wordIndex
-        )
+    val isThisWordLoading = wbwState.isWbwAudioLoading(
+        verseUi.verse.chapterNo,
+        verseUi.verse.verseNo,
+        word.wordIndex
+    )
 
-        Box(
-            Modifier
-                .wrapContentWidth(Alignment.CenterHorizontally)
-                .background(
-                    if (active) colorScheme.primary.alpha(0.3f) else Color.Transparent,
-                    shape = shapes.small
-                )
-                .clickable { handleWordClick(word) }
+    Box(
+        Modifier
+            .wrapContentWidth(Alignment.CenterHorizontally)
+            .background(
+                if (active) colorScheme.primary.alpha(0.3f) else Color.Transparent,
+                shape = shapes.small
+            )
+            .clickable { handleWordClick(word) }
+            .padding(3.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .wrapContentWidth(Alignment.CenterHorizontally),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Column(
-                modifier = Modifier
-                    .wrapContentWidth(Alignment.CenterHorizontally),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                val hasTransliteration = !wbw?.transliteration.isNullOrBlank()
-                val hasTranslation = !wbw?.translation.isNullOrBlank()
-                val showDividerUnderArabic = hasTransliteration || hasTranslation
+            val hasTransliteration = !wbw?.transliteration.isNullOrBlank()
+            val hasTranslation = !wbw?.translation.isNullOrBlank()
+            val showDividerUnderArabic = hasTransliteration || hasTranslation
 
-                Text(
-                    text = word.text,
-                    style = arabicStyle,
-                    modifier = if (showDividerUnderArabic) {
-                        Modifier.drawBehind {
-                            val stroke = 1.dp.toPx()
-                            val y = size.height + stroke * 0.5f
-                            drawLine(
-                                color = dividerColor,
-                                strokeWidth = stroke,
-                                start = Offset(0f, y),
-                                end = Offset(size.width, y),
-                            )
-                        }
-                    } else {
-                        Modifier
-                    },
-                )
+            QuranWordText(
+                modifier = if (showDividerUnderArabic) {
+                    Modifier.drawBehind {
+                        val stroke = 1.dp.toPx()
+                        val y = size.height + stroke * 0.5f
+                        drawLine(
+                            color = dividerColor,
+                            strokeWidth = stroke,
+                            start = Offset(0f, y),
+                            end = Offset(size.width, y),
+                        )
+                    }
+                } else {
+                    Modifier
+                },
+                word = word,
+                atlasPlacements = atlasPlacements,
+                style = arabicStyle,
+            )
 
-                if (hasTranslation || hasTransliteration) {
-                    Spacer(Modifier.height(3.dp))
+            if (hasTranslation || hasTransliteration) {
+                Spacer(Modifier.height(3.dp))
 
-                    CompositionLocalProvider(LocalLayoutDirection provides if (wbwState.isWbwRtl) LayoutDirection.Rtl else LayoutDirection.Ltr) {
-                        if (hasTransliteration) {
-                            Text(
-                                text = wbw.transliteration,
-                                style = textStyles.wbwTrltStyle ?: TextStyle.Default,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
+                CompositionLocalProvider(LocalLayoutDirection provides if (wbwState.isWbwRtl) LayoutDirection.Rtl else LayoutDirection.Ltr) {
+                    if (hasTransliteration) {
+                        Text(
+                            text = wbw.transliteration,
+                            style = textStyles.wbwTrltStyle ?: TextStyle.Default,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
 
-                        if (hasTranslation) {
-                            Text(
-                                text = wbw.translation,
-                                style = textStyles.wbwTrStyle ?: TextStyle.Default,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.widthIn(max = textStyles.wbwMaxWith),
-                            )
-                        }
+                    if (hasTranslation) {
+                        Text(
+                            text = wbw.translation,
+                            style = textStyles.wbwTrStyle ?: TextStyle.Default,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.widthIn(max = textStyles.wbwMaxWith),
+                        )
                     }
                 }
             }
+        }
 
 
-            if (isThisWordLoading) {
-                LinearProgressIndicator(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .widthIn(min = 10.dp, max = 40.dp)
-                        .height(2.dp),
-                    color = colorScheme.primary,
-                    trackColor = colorScheme.surfaceVariant,
-                )
+        if (isThisWordLoading) {
+            Box(
+                Modifier
+                    .align(Alignment.Center)
+            ) {
+                Loader(size = 20.dp)
             }
         }
     }

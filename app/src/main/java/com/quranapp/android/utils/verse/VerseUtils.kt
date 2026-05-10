@@ -1,13 +1,11 @@
 package com.quranapp.android.utils.verse
 
 import android.content.Context
-import com.quranapp.android.compose.utils.preferences.ReaderPreferences
 import com.quranapp.android.compose.utils.preferences.VersePreferences
-import com.quranapp.android.repository.QuranRepository
 import com.quranapp.android.db.relations.VerseWithDetails
+import com.quranapp.android.repository.QuranRepository
 import com.quranapp.android.utils.others.ShortcutUtils
 import com.quranapp.android.utils.quran.QuranMeta
-import com.quranapp.android.utils.reader.TranslUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
@@ -40,8 +38,8 @@ object VerseUtils {
             )
 
             if (existing != null) {
-                votdChapNo = savedVerse.chapterNo
-                votdVerseNo = savedVerse.verseNo
+                votdChapNo = existing.chapterNo
+                votdVerseNo = existing.verseNo
                 return@withContext existing
             } else {
                 // Stored verse is corrupted/invalid -> clear it so we can regenerate
@@ -52,7 +50,10 @@ object VerseUtils {
         // 2) Generate a new one ONLY if none exists or it expired
         repeat(MAX_VOTD_ATTEMPTS) {
             val chapterNo = Random.nextInt(1, QuranMeta.chapterRange.last + 1)
-            val verseNo = Random.nextInt(1, repository.getChapterVerseCount(chapterNo) + 1)
+            val verseCount = repository.getChapterVerseCount(chapterNo)
+            if (verseCount <= 0 || verseCount == Int.MAX_VALUE) return@repeat
+
+            val verseNo = Random.nextInt(1, verseCount + 1)
 
             val vwd = buildVerseWithDetails(repository, chapterNo, verseNo)
 
@@ -85,7 +86,13 @@ object VerseUtils {
         if (!QuranMeta.isChapterValid(chapterNo)) return null
         if (!repository.isVerseValid4Chapter(chapterNo, verseNo)) return null
 
-        return repository.getVerseWithDetails(chapterNo, verseNo)
+        return repository.getVerseWithDetails(
+            chapterNo,
+            verseNo,
+            // Loads ayah words for optimal VOTD selection.
+            // But still hides in the UI
+            arabicEnabled = true,
+        )
     }
 
     private fun isExpired(timestamp: Long): Boolean {
@@ -105,12 +112,5 @@ object VerseUtils {
         }
 
         return chapterNo == votdChapNo && verseNo == votdVerseNo
-    }
-
-    fun obtainOptimalSlugForVotd(): String {
-        val savedTranslations = ReaderPreferences.getTranslations()
-
-        return savedTranslations.firstOrNull { !TranslUtils.isTransliteration(it) }
-            ?: TranslUtils.TRANSL_SLUG_DEFAULT
     }
 }

@@ -221,7 +221,7 @@
     <string name="verseSyncOff">هاوکاتکردنی ئایەت : نا چالاک</string>
     <string name="strPreviewTextTransl">بەناوی خوای بەخشندەی میهرەبان</string>
     <string name="titleScriptCleanup">سڕینەوەی سکریپت؟</string>
-    <string name="msgRecitationCleanup" formatted="false">سەرجەم فایلە دەنگییەکانی %s دەسڕێتەوە.</string>
+    <string name="msgRecitationCleanup" formatted="false">سەرجەم فایلە دەنگییەکانی %s دەسڕێتەوە. بۆ سڕینەوەی قورئانخوێنەکان بە جیا بەپێی سوورەت، بڕۆ بۆ ڕێکخستنەکان.</string>
     <string name="titleRecitationCleanup">سڕینەوەی قورئانخوێن؟</string>
     <string name="nFiles" formatted="false">%d لە فایلەکان</string>
     <string name="nScriptsAndFonts" formatted="false">%1$d شێواز و %2$d فۆنت</string>
@@ -394,6 +394,7 @@
     <string name="playWord">وشەکە لێبدە</string>
     <string name="previousWord">وشەی پێشوو</string>
     <string name="nextWord">وشەی دواتر</string>
+    <string name="wbwSelectLanguage">زمانی وشەبەوشە هەڵبژێرە</string>
     <string name="results">ئەنجامەکان</string>
     <string name="titleRecentSearches">گەڕانەکانی دوایی</string>
     <string name="searchInQuran">گەڕان لە قورئاندا</string>
@@ -410,5 +411,31 @@
     <string name="discord">دیسکۆرد</string>
     <string name="strTitleDownloadSunnahApp">دابەزاندنی SunnahApp</string>
     <string name="tajweedColors">ڕەنگەکانی تەجوید</string>
-</resources>
+    <string name="similarVerses">ئایەتە هاوشێوەکان</string>
+    <string name="noSimilarVerses">بۆ ئەم ئایەتە هیچ ئایەتی هاوشێوە نییە.</string>
+    <string name="countSimilarVerses" formatted="false">%1$s %2$d ئایەتی هاوشێوەی هەیە</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% هاوشێوەیی · سکۆری %2$d</string>
+    <string name="moreOptions">هەڵبژاردەی زیاتر</string>
+    <string name="whenChapterEnds">کاتێک سوورەت تەواو دەبێت</string>
+    <string name="whenChapterEndsDesc">هەڵبژێرە دوای تەواوبوونی لێدانی سوورەتی ئێستا چی ڕوودەدات.</string>
+    <string name="stopPlayback">وەستاندنی لێدان</string>
+    <string name="playNextSurah">لێدانی سوورەتی داهاتوو</string>
+    <string name="repeatCurrentSurah">دووبارەکردنەوەی سوورەتی ئێستا</string>
+    <string name="reset">ڕێکخستنەوە</string>
+    <string name="selectAll">هەموویان هەڵبژێرە</string>
+    <string name="filterTranslationsDisabledNote">کاتێک گەڕانی عەرەبی چالاکە، لە وەرگێڕانەکاندا نەگەڕێت.</string>
+    <string name="filterTranslationsEmpty">هێشتا هیچ وەرگێڕانێک دابەزێندراوە نییە.</string>
 
+    <string name="wbwAudioTimingsCouldNotLoad">کات‌بەندیی وشەکان بار نەکرا. تکایە پەیوەندیی ئینتەرنێت بپشکنە و دووبارە هەوڵبدە.</string>
+    <string name="wbwAudioCouldNotPlay">لێدانی دەنگی وشەکە سەرکەوتوو نەبوو.</string>
+    <string name="wbwAudioDownloadHint">بۆ گوێگرتنی ئۆفلاین و لێدانێکی نەرمتەر، دەنگی وشە بە وشە دابەزێنە.</string>
+    <string name="wbwAudio">دەنگی وشە بە وشە</string>
+    <string name="wbwAudioDownloadAll">دابەزاندنی هەموو</string>
+    <string name="wbwAudioDownloadAllConfirm">دەتەوێت دەنگی تلاوەتی وشە بە وشەی هەموو سوورەتەکان دابەزێنیت؟ ئەمە ڕەنگە بەتوندی شوێنی هەڵگرتن و داتای مۆبایل بەکاربهێنێت.</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">پێش دابەزاندنی هەموو، چاوەڕوانی تەواوبوونی دابەزاندنی سوورەتە تاکەکان بکە.</string>
+    <string name="wbwAudioChapterWaitForBulk">پێش دابەزاندنی سوورەتێکی تاک، چاوەڕوانی تەواوبوونی دابەزاندنی گشتی بکە.</string>
+    <string name="ontologyExplorer">گەڕانی بابەتەکانی قورئان</string>
+    <string name="thematicTopics">بابەتەکان بە پێی تێما</string>
+    <string name="englishContentOnly">ناوەڕۆکی ئەم پەڕەیە تەنها بە زمانی ئینگلیزی بەردەستە.</string>
+    <string name="estimatedSize">قەبارەی خەمڵێندراو: %s</string>
+</resources>

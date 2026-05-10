@@ -2,8 +2,6 @@ package com.quranapp.android.viewModels
 
 import android.app.Application
 import android.content.Context
-import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.Typography
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.application
@@ -18,11 +16,11 @@ import com.quranapp.android.compose.components.reader.ReaderPreparedData
 import com.quranapp.android.compose.components.reader.TranslationPageItem
 import com.quranapp.android.compose.components.reader.TranslationPageSection
 import com.quranapp.android.compose.utils.preferences.ReaderPreferences
-import com.quranapp.android.db.entities.ReadHistoryEntity
+import com.quranapp.android.db.entities.user.ReadHistoryEntity
 import com.quranapp.android.utils.Log
 import com.quranapp.android.utils.others.ShortcutUtils
 import com.quranapp.android.utils.quran.QuranMeta
-import com.quranapp.android.utils.quran.QuranUtils
+import com.quranapp.android.utils.reader.ComposeUiConfig
 import com.quranapp.android.utils.reader.PageBuilderParams
 import com.quranapp.android.utils.reader.QuranScript
 import com.quranapp.android.utils.reader.ReadType
@@ -172,9 +170,7 @@ class ReaderViewModel(application: Application) : ReaderProviderViewModel(applic
      * screen is visible.
      */
     suspend fun observeChanges(
-        context: Context,
-        colors: ColorScheme,
-        type: Typography,
+        uiConfig: ComposeUiConfig,
         verseActions: VerseActions,
     ) {
         readerMode
@@ -197,11 +193,9 @@ class ReaderViewModel(application: Application) : ReaderProviderViewModel(applic
                 when (action) {
                     is ReaderObserveAction.BuildVerse -> {
                         val params = TextBuilderParams(
-                            context = context,
-                            fontResolver = fontResolver,
+                            uiConfig = uiConfig,
                             verseActions = verseActions,
-                            colors = colors,
-                            type = type,
+                            fontResolver = fontResolver,
                             arabicEnabled = action.cfg.arabicEnabled,
                             arabicSizeMultiplier = action.cfg.arabicSize,
                             translationSizeMultiplier = action.cfg.translationSize,
@@ -434,7 +428,7 @@ class ReaderViewModel(application: Application) : ReaderProviderViewModel(applic
                 .filterIsInstance<QuranPageLineItem.Text>()
                 .firstOrNull()?.words?.firstOrNull()
             if (firstWord != null) {
-                lastKnownVerse = QuranUtils.getVerseNoFromAyahId(firstWord.ayahId).let {
+                lastKnownVerse = QuranMeta.getVerseNoFromAyahId(firstWord.ayahId).let {
                     ChapterVersePair(it.first, it.second)
                 }
                 return
@@ -442,7 +436,7 @@ class ReaderViewModel(application: Application) : ReaderProviderViewModel(applic
         }
         viewModelScope.launch(Dispatchers.IO) {
             val ayahId = repository.getFirstAyahIdOnPage(pageNo) ?: return@launch
-            lastKnownVerse = QuranUtils.getVerseNoFromAyahId(ayahId).let {
+            lastKnownVerse = QuranMeta.getVerseNoFromAyahId(ayahId).let {
                 ChapterVersePair(it.first, it.second)
             }
         }
@@ -467,7 +461,7 @@ class ReaderViewModel(application: Application) : ReaderProviderViewModel(applic
         viewModelScope.launch(Dispatchers.IO) {
             val ayahId = repository.getFirstAyahIdOnPage(pageNo) ?: return@launch
 
-            lastKnownVerse = QuranUtils.getVerseNoFromAyahId(ayahId).let {
+            lastKnownVerse = QuranMeta.getVerseNoFromAyahId(ayahId).let {
                 ChapterVersePair(it.first, it.second)
             }
         }
@@ -628,8 +622,8 @@ class ReaderViewModel(application: Application) : ReaderProviderViewModel(applic
                     context, params, repository, vt.hizbNo
                 )
 
-                is ReaderViewType.Chapter -> ReaderItemsBuilder.buildVersesForTranslationMode(
-                    context, params, repository, vt.chapterNo,
+                is ReaderViewType.Chapter -> ReaderItemsBuilder.buildChapterVersesForTranslationMode(
+                    context, params, vt.chapterNo,
                 )
 
                 null -> ReaderPreparedData(emptyList(), emptyMap())
@@ -678,7 +672,6 @@ class ReaderViewModel(application: Application) : ReaderProviderViewModel(applic
             )
 
             ReaderItemsBuilder.buildMushafPages(
-                repository,
                 fontResolver,
                 missing,
                 params
@@ -782,7 +775,7 @@ class ReaderViewModel(application: Application) : ReaderProviderViewModel(applic
 
         val ayahId = repository.getFirstAyahIdOnPage(oldMushafId, currentPage) ?: return null
 
-        val (chapterNo, verseNo) = QuranUtils.getVerseNoFromAyahId(ayahId)
+        val (chapterNo, verseNo) = QuranMeta.getVerseNoFromAyahId(ayahId)
 
         return ChapterVersePair(chapterNo, verseNo)
     }

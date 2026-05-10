@@ -1,6 +1,5 @@
 package com.quranapp.android.compose.screens.tafsir
 
-import ThemeUtils
 import android.content.Context
 import android.content.Intent
 import android.view.View
@@ -27,6 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -42,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,7 +67,12 @@ import com.quranapp.android.api.models.tafsir.TafsirModel
 import com.quranapp.android.compose.components.common.AppBar
 import com.quranapp.android.compose.components.reader.navigator.ChapterVerseNavigator
 import com.quranapp.android.compose.navigation.SettingRoutes
+import com.quranapp.android.compose.theme.toCssVariables
+import com.quranapp.android.compose.utils.LocalAppLocale
+import com.quranapp.android.compose.utils.ThemeUtils
+import com.quranapp.android.compose.utils.preferences.ReaderPreferences
 import com.quranapp.android.utils.quran.QuranMeta
+import com.quranapp.android.utils.quran.parser.ParserUtils.compressVerseRefsByChapter
 import com.quranapp.android.utils.tafsir.TafsirUtils
 import com.quranapp.android.utils.tafsir.TafsirWebViewClient
 import com.quranapp.android.utils.univ.Keys
@@ -85,9 +91,9 @@ fun TafsirReaderScreen(
 ) {
     val viewModel = viewModel<TafsirReaderViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var webViewScrollY by remember { mutableIntStateOf(0) }
+    var webViewScrollY by rememberSaveable { mutableIntStateOf(0) }
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
-    var showChapterVerseNavigator by remember { mutableStateOf(false) }
+    var showChapterVerseNavigator by rememberSaveable { mutableStateOf(false) }
 
     val onEvent = viewModel::onEvent
     val context = LocalContext.current
@@ -165,11 +171,8 @@ fun TafsirReaderScreen(
 
                 is TafsirContentState.Success -> {
                     TafsirWebViewContent(
-                        text = contentState.tafsir.text,
-                        verses = contentState.tafsir.verses,
-                        tafsirKey = uiState.tafsirKey,
-                        textSizeMultiplier = uiState.textSizeMultiplier,
-                        langCode = uiState.tafsirInfo?.langCode,
+                        contentState = contentState,
+                        uiState = uiState,
                         onWebViewCreated = { webViewRef = it },
                         onScrollChanged = { scrollY -> webViewScrollY = scrollY },
                     )
@@ -227,8 +230,9 @@ private fun TafsirTopBar(
     onOpenChapterVerseNavigator: () -> Unit,
     onShare: (() -> Unit)? = null,
 ) {
+    val appLocale = LocalAppLocale.current
     val context = LocalContext.current
-    val chapterName = uiState.chapterMeta?.getCurrentName() ?: ""
+    val chapterName = uiState.chapterMeta?.let { it.getCurrentName() } ?: ""
     val chapterNo = uiState.chapterNo
     val verseNo = uiState.verseNo
 
@@ -243,7 +247,6 @@ private fun TafsirTopBar(
                 Text(
                     text = uiState.tafsirInfo?.name ?: "",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -253,7 +256,7 @@ private fun TafsirTopBar(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = String.format(
-                            Locale.getDefault(),
+                            appLocale.platformLocale,
                             $$"%1$s %2$d:%3$d",
                             chapterName,
                             chapterNo,
@@ -303,29 +306,45 @@ private fun TafsirTopBar(
 
 @Composable
 private fun TafsirWebViewContent(
-    text: String,
-    verses: List<String>,
-    tafsirKey: String,
-    textSizeMultiplier: Float,
-    langCode: String?,
+    contentState: TafsirContentState.Success,
+    uiState: TafsirReaderUiState,
     onWebViewCreated: (WebView) -> Unit,
     onScrollChanged: (Int) -> Unit,
 ) {
     val context = LocalContext.current
     val isDarkTheme = ThemeUtils.observeDarkTheme()
+    val arabicReaderSizeMult = ReaderPreferences.observeArabicTextSizeMultiplier()
+    val translationReaderSizeMult = ReaderPreferences.observeTranlationTextSizeMultiplier()
+    val text = contentState.tafsir.text
+    val verses = contentState.tafsir.verses
+    val verseHeaderHtml = contentState.verseHeaderHtml
+    val extraHeadCss = contentState.extraHeadCss
+    val textSizeMultiplier = uiState.textSizeMultiplier
+    val langCode = uiState.tafsirInfo?.langCode
+    val colors = MaterialTheme.colorScheme
 
     val htmlContent = remember(
         text,
         verses,
+        verseHeaderHtml,
+        extraHeadCss,
         textSizeMultiplier,
         isDarkTheme,
         langCode,
+        arabicReaderSizeMult,
+        translationReaderSizeMult,
+        colors,
     ) {
         buildTafsirHtml(
             context = context,
             content = text,
             verses = verses,
+            verseHeaderHtml = verseHeaderHtml,
+            extraHeadCss = extraHeadCss,
             fontSizePercent = (textSizeMultiplier * 100).toInt(),
+            arabicReaderSizeMult = arabicReaderSizeMult,
+            translationReaderSizeMult = translationReaderSizeMult,
+            colorScheme = colors,
             isDark = isDarkTheme,
             langCode = langCode ?: "en"
         )
@@ -350,10 +369,11 @@ private fun TafsirWebViewContent(
             },
             update = { webView ->
                 webView.webViewClient = TafsirWebViewClient(
-                    tafsirKey = tafsirKey,
-                    onPageFinished = { isLoading = false }
+                    tafsirKey = uiState.tafsirKey,
+                    atlasAyahImageCache = contentState.atlasAyahImageCache.takeIf { it.isNotEmpty() },
+                    onPageFinished = { isLoading = false },
                 )
-                val signature = htmlContent to tafsirKey
+                val signature = htmlContent to uiState.tafsirKey
 
                 if (lastLoad != signature) {
                     lastLoad = signature
@@ -391,11 +411,21 @@ private fun TafsirWebViewContent(
     }
 }
 
+private fun readerTextSizeMultForCss(mult: Float): String {
+    val m = mult.coerceIn(0.25f, 5f).toDouble()
+    return String.format(Locale.US, "%.6f", m).trimEnd('0').trimEnd('.').ifEmpty { "1" }
+}
+
 private fun buildTafsirHtml(
     context: android.content.Context,
     content: String,
     verses: List<String>,
+    verseHeaderHtml: String,
+    extraHeadCss: String,
     fontSizePercent: Int,
+    arabicReaderSizeMult: Float,
+    translationReaderSizeMult: Float,
+    colorScheme: ColorScheme,
     isDark: Boolean,
     langCode: String
 ): String {
@@ -404,29 +434,34 @@ private fun buildTafsirHtml(
 
     val multiVerseAlert = if (verses.size > 1) {
         val alertMsg = context.getString(R.string.readingTafsirMultiVerses)
-        val versesSorted = verses.sortedWith(
-            compareBy(
-                { it.substringBefore(':').toIntOrNull() ?: 0 },
-                { it.substringAfter(':').toIntOrNull() ?: 0 }
-            )
-        )
+        val versesSorted = compressVerseRefsByChapter(verses)
+
         """
         <div class="multiple-verse-alert">
             <strong>$alertMsg</strong> ${versesSorted.joinToString(", ")}
         </div>
         """.trimIndent()
-    } else ""
+    } else {
+        ""
+    }
 
     val fullContent = multiVerseAlert + content
 
     val boilerplate = ResUtils.readAssetsTextFile(context, "tafsir/tafsir_page.html")
 
+    val rootVarsInner = colorScheme.toCssVariables() +
+            "--tafsir-ar-size-mult:${readerTextSizeMultForCss(arabicReaderSizeMult)};" +
+            "--tafsir-tr-size-mult:${readerTextSizeMultForCss(translationReaderSizeMult)};"
+
     val replacements = mapOf(
         "{{THEME}}" to theme,
-        "{{CONTENT}}" to fullContent,
         "{{DIR}}" to direction,
         "{{LANG}}" to langCode,
-        "{{FONT_SIZE}}" to fontSizePercent.toString()
+        "{{ROOT_VARS}}" to rootVarsInner,
+        "{{EXTRA_HEAD}}" to extraHeadCss,
+        "{{FONT_SIZE}}" to fontSizePercent.toString(),
+        "{{VERSE_HEADER}}" to verseHeaderHtml,
+        "{{CONTENT}}" to fullContent,
     )
 
     val pattern = Regex(replacements.keys.joinToString("|") { Regex.escape(it) })
@@ -664,7 +699,7 @@ private fun shareTafsir(
         .trim()
     if (plain.isEmpty()) return
 
-    val chapterName = uiState.chapterMeta?.getCurrentName() ?: ""
+    val chapterName = uiState.chapterMeta?.let { it.getCurrentName() } ?: ""
     val ref = "${uiState.chapterNo}:${uiState.verseNo}"
     val text = buildString {
         uiState.tafsirInfo?.name?.let { append(it).append('\n') }

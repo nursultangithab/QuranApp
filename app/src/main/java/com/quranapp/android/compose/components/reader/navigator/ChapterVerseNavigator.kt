@@ -9,10 +9,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -46,6 +50,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.quranapp.android.R
 import com.quranapp.android.compose.components.common.Loader
 import com.quranapp.android.compose.theme.alpha
+import com.quranapp.android.compose.utils.formattedStringResource
 import com.quranapp.android.db.entities.quran.SurahEntity
 import com.quranapp.android.db.relations.SurahWithLocalizations
 import com.quranapp.android.repository.QuranRepository
@@ -80,6 +85,7 @@ fun ChapterVerseNavigator(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        contentWindowInsets = { WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom) },
     ) {
 
         Content(
@@ -191,7 +197,7 @@ private fun RowScope.ChapterOnlyList(
                 surah.surah.surahNo in surahNos
             }
 
-            gridState.requestScrollToItem(0)
+            gridState.scrollToItem(0)
         }
     }
 
@@ -252,7 +258,7 @@ private fun VerseSelectList(
     var filteredAyahs by remember { mutableStateOf(ayahs) }
 
     LaunchedEffect(currentChapter) {
-        state.requestScrollToItem(selectedVerseNos.firstOrNull() ?: 0, -200)
+        state.scrollToItem(selectedVerseNos.firstOrNull() ?: 0, -200)
     }
 
     LaunchedEffect(ayahs, searchQuery) {
@@ -264,7 +270,7 @@ private fun VerseSelectList(
             filteredAyahs = ayahs.filter { ayahNo ->
                 ayahNo.toString().contains(query)
             }
-            state.requestScrollToItem(0)
+            state.scrollToItem(0)
         }
     }
 
@@ -310,7 +316,7 @@ private fun VerseSelectList(
                         ),
                     ) {
                         Text(
-                            stringResource(R.string.strLabelVerseNo, verseNo),
+                            formattedStringResource(R.string.strLabelVerseNo, verseNo),
                             modifier = Modifier
                                 .clickable { onToggleVerse(verseNo) }
                                 .padding(10.dp),

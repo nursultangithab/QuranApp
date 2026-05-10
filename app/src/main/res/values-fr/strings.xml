@@ -219,7 +219,7 @@
 \nVous devrez le retélécharger.</string>
     <string name="titleScriptCleanup">Supprimer le type d\'écriture \?</string>
     <string name="msgScriptCleanup" formatted="false">Le type d\'écriture %s et toutes ses polices d\'écriture sauvegardées seront supprimées. Vous devrez les retéléchargez pour les utiliser à nouveau.</string>
-    <string name="msgRecitationCleanup" formatted="false">Toutes les récitations sauvegardées de %s seront supprimées.</string>
+    <string name="msgRecitationCleanup" formatted="false">Toutes les récitations sauvegardées de %s seront supprimées. Pour supprimer individuellement des récitations par sourate, allez dans les paramètres.</string>
     <string name="titleRecitationCleanup">Supprimer la récitation \?</string>
     <string name="nScriptsAndFonts" formatted="false">%1$d types d\'écriture et %2$d polices d\'écriture</string>
     <string name="nothingToCleanup">Il n\'y a rien à effacer.</string>
@@ -397,6 +397,7 @@
     <string name="playWord">Lire le mot</string>
     <string name="previousWord">Mot précédent</string>
     <string name="nextWord">Mot suivant</string>
+    <string name="wbwSelectLanguage">Choisir la langue mot à mot</string>
     <string name="results">Résultats</string>
     <string name="titleRecentSearches">Recherches récentes</string>
     <string name="searchInQuran">Rechercher dans le Coran</string>
@@ -413,5 +414,31 @@
     <string name="discord">Discord</string>
     <string name="strTitleDownloadSunnahApp">Télécharger SunnahApp</string>
     <string name="tajweedColors">Couleurs du Tajwid</string>
-</resources>
+    <string name="similarVerses">Versets similaires</string>
+    <string name="noSimilarVerses">Il n’y a pas de versets similaires pour ce verset.</string>
+    <string name="countSimilarVerses" formatted="false">%1$s a %2$d ayahs similaires</string>
+    <string name="similarVerseRowMeta" formatted="false">Correspondance de %1$d%% · score %2$d</string>
+    <string name="moreOptions">Plus d’options</string>
+    <string name="whenChapterEnds">À la fin de la sourate</string>
+    <string name="whenChapterEndsDesc">Choisissez ce qui se passe après la fin de lecture de la sourate actuelle.</string>
+    <string name="stopPlayback">Arrêter la lecture</string>
+    <string name="playNextSurah">Lire la sourate suivante</string>
+    <string name="repeatCurrentSurah">Répéter la sourate actuelle</string>
+    <string name="reset">Réinitialiser</string>
+    <string name="selectAll">Tout sélectionner</string>
+    <string name="filterTranslationsDisabledNote">Les traductions ne sont pas recherchées tant que la recherche en arabe est activée.</string>
+    <string name="filterTranslationsEmpty">Aucune traduction téléchargée pour le moment.</string>
 
+    <string name="wbwAudioTimingsCouldNotLoad">Les timings mot à mot n\'ont pas pu être chargés. Vérifiez votre connexion et réessayez.</string>
+    <string name="wbwAudioCouldNotPlay">Impossible de lire l\'audio du mot.</string>
+    <string name="wbwAudioDownloadHint">Téléchargez l\'audio mot à mot pour une écoute hors ligne et une lecture plus fluide.</string>
+    <string name="wbwAudio">Audio mot à mot</string>
+    <string name="wbwAudioDownloadAll">Tout télécharger</string>
+    <string name="wbwAudioDownloadAllConfirm">Télécharger l\'audio de récitation mot à mot de toutes les sourates ? Cela peut consommer beaucoup de stockage et de données mobiles.</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">Attendez la fin des téléchargements de sourates individuelles avant de tout télécharger.</string>
+    <string name="wbwAudioChapterWaitForBulk">Attendez la fin du téléchargement complet avant de télécharger une seule sourate.</string>
+    <string name="ontologyExplorer">Explorateur de thèmes</string>
+    <string name="thematicTopics">Thèmes par catégorie</string>
+    <string name="englishContentOnly">Le contenu de cette page est disponible uniquement en anglais.</string>
+    <string name="estimatedSize">Taille estimée : %s</string>
+</resources>

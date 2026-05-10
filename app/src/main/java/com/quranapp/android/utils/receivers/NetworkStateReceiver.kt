@@ -67,6 +67,7 @@ class NetworkStateReceiver : BroadcastReceiver() {
         @JvmStatic
         fun isNetworkConnected(context: Context): Boolean {
             val mgr = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 val nw = mgr.activeNetwork ?: return false
                 val actNw = mgr.getNetworkCapabilities(nw) ?: return false
@@ -87,12 +88,14 @@ class NetworkStateReceiver : BroadcastReceiver() {
         @JvmStatic
         val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
 
-        @JvmOverloads
-        fun canProceed(context: Context, cancelable: Boolean = true, runOnDismissIfCantProceed: Runnable? = null): Boolean {
+        fun canProceed(
+            context: Context,
+        ): Boolean {
             if (!isNetworkConnected(context)) {
-                MessageUtils.popNoInternetMessage(context, cancelable, runOnDismissIfCantProceed)
+                MessageUtils.popNoInternetToast(context)
                 return false
             }
+
             return true
         }
     }

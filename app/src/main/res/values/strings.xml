@@ -294,7 +294,7 @@
     <string name="labelFreeUpSpace">Free up space</string>
     <string name="msgDeleteTranslation" formatted="false">%1$s\n%2$s\n\nYou will need to download it again.</string>
     <string name="titleRecitationCleanup">Delete recitation\?</string>
-    <string name="msgRecitationCleanup" formatted="false">All the stored recitation from %s will be deleted.</string>
+    <string name="msgRecitationCleanup" formatted="false">All the stored recitation from %s will be deleted. To individually delete recitations by surah, go to the settings.</string>
     <string name="titleScriptCleanup">Delete script\?</string>
     <string name="msgScriptCleanup" formatted="false">%s script and all its stored fonts will be deleted. You will need to re-download to use them again.</string>
     <string name="nFiles" formatted="false">%d files</string>
@@ -412,6 +412,7 @@
     <string name="playWord">Play word</string>
     <string name="previousWord">Previous word</string>
     <string name="nextWord">Next word</string>
+    <string name="wbwSelectLanguage">Select word-by-word language</string>
     <string name="results">Results</string>
     <string name="topics">Topics</string>
     <string name="titleRecentSearches">Recent searches</string>
@@ -427,4 +428,36 @@
     <string name="belowWord">Below word</string>
     <string name="inTooltip">In tooltip</string>
     <string name="tajweedColors">Tajweed colors</string>
+    <string name="similarVerses">Similar verses</string>
+    <string name="noSimilarVerses">There are no similar verses for this verse.</string>
+    <string name="countSimilarVerses" formatted="false">%1$s has %2$d similar ayahs</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% match · score %2$d</string>
+    <string name="moreOptions">More options</string>
+    <string name="whenChapterEnds">When a surah ends</string>
+    <string name="whenChapterEndsDesc">Choose what happens after the current surah finishes playing.</string>
+    <string name="stopPlayback">Stop playback</string>
+    <string name="playNextSurah">Play next surah</string>
+    <string name="repeatCurrentSurah">Repeat current surah</string>
+
+    <string name="reset">Reset</string>
+    <string name="selectAll">Select all</string>
+    <string name="filterTranslationsDisabledNote">Translations aren\'t searched while Arabic search is on.</string>
+    <string name="filterTranslationsEmpty">No translations downloaded yet.</string>
+
+    <string name="byteProgress" formatted="false" translatable="false">%1$s / %2$s</string>
+
+    <string name="wbwAudioTimingsCouldNotLoad">Word timings could not be loaded. Check your connection and try again.</string>
+    <string name="wbwAudioCouldNotPlay">Could not play word audio.</string>
+    <string name="wbwAudioDownloadHint">Download word-by-word audios for offline listening and smoother playback.</string>
+    <string name="wbwAudio">Word-by-word audio</string>
+    <string name="wbwAudioDownloadAll">Download all</string>
+    <string name="wbwAudioDownloadAllConfirm">
+        Download all chapters of word-by-word recitation audio? This may use significant storage and mobile data.
+    </string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">Wait for individual chapter downloads to finish before downloading all.</string>
+    <string name="wbwAudioChapterWaitForBulk">Wait for the full download to finish before downloading a single chapter.</string>
+    <string name="ontologyExplorer">Ontology Explorer</string>
+    <string name="thematicTopics">Topics by Theme</string>
+    <string name="englishContentOnly">Content on this page is available in English only.</string>
+    <string name="estimatedSize">Estimated size: %s</string>
 </resources>

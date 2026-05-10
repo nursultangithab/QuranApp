@@ -17,7 +17,6 @@ import com.quranapp.android.db.relations.NavigationUnitRange
 import com.quranapp.android.db.relations.SurahWithLocalizations
 import com.quranapp.android.db.relations.VerseWithDetails
 import com.quranapp.android.utils.quran.QuranMeta
-import com.quranapp.android.utils.quran.QuranUtils
 import com.quranapp.android.utils.reader.toQuranMushafId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -26,6 +25,10 @@ class QuranRepository(
     private val database: QuranDatabase,
     private val extDatabase: ExternalQuranDatabase
 ) {
+    companion object {
+        private const val ARBITRARY_BATCH_CHUNK_SIZE = 400
+    }
+
     private val mushafDao get() = database.mushafDao()
     private val arabicSearchDao get() = database.arabicSearchDao()
     private val ayahDao get() = database.ayahDao()
@@ -34,6 +37,7 @@ class QuranRepository(
     private val surahSearchDao get() = database.surahSearchDao()
     private val navigationDao get() = database.navigationDao()
     private val wbwDao get() = extDatabase.wbwDao()
+    val extrasDao get() = database.extrasDao()
 
     suspend fun getNumberOfPages(mushafId: Int): Int {
         if (mushafId <= 0) return 0
@@ -93,11 +97,13 @@ class QuranRepository(
     suspend fun getVerseWithDetails(
         chapterNo: Int,
         verseNo: Int,
-        scriptCode: String? = null
+        scriptCode: String? = null,
+        arabicEnabled: Boolean,
     ): VerseWithDetails? {
         val script = scriptCode ?: ReaderPreferences.getQuranScript()
 
-        val batch = loadVersesBatch(chapterNo, verseNo, verseNo, script) ?: return null
+        val batch =
+            loadVersesBatch(chapterNo, verseNo, verseNo, script, arabicEnabled) ?: return null
 
         val ayah = batch.ayahByVerseNo[verseNo] ?: return null
         val words = batch.wordsByVerseNo[verseNo] ?: emptyList()
@@ -115,6 +121,7 @@ class QuranRepository(
         fromVerse: Int,
         toVerse: Int,
         scriptCode: String,
+        arabicEnabled: Boolean,
     ): ChapterVerseBatch? {
         val surah = surahDao.getSurahWithLocalization(chapterNo) ?: return null
 
@@ -142,7 +149,7 @@ class QuranRepository(
             pageByVerse[a.ayahNo] = pageByAyahId[a.ayahId] ?: -1
         }
 
-        val wordsFlat = if (verseIds.isNotEmpty()) {
+        val wordsFlat = if (arabicEnabled && verseIds.isNotEmpty()) {
             ayahWordDao.getWordsForAyahs(verseIds, scriptCode)
         } else {
             emptyList()
@@ -170,12 +177,29 @@ class QuranRepository(
         chapterNo: Int,
         verseNos: List<Int>,
         scriptCode: String,
+        arabicEnabled: Boolean,
     ): ChapterVerseBatch? {
-        val distinct = verseNos.distinct()
+        val distinct = verseNos.asSequence()
+            .filter { it > 0 }
+            .distinct()
+            .sorted()
+            .toList()
         if (distinct.isEmpty()) return null
 
-        val ayahIds = distinct.map { QuranUtils.getAyahId(chapterNo, it) }
-        val ayahs = ayahDao.getAyahsByIds(ayahIds)
+        if (distinct.isContiguousRange()) {
+            return loadVersesBatch(
+                chapterNo = chapterNo,
+                fromVerse = distinct.first(),
+                toVerse = distinct.last(),
+                scriptCode = scriptCode,
+                arabicEnabled = arabicEnabled,
+            )
+        }
+
+        val ayahIds = distinct.map { QuranMeta.getAyahId(chapterNo, it) }
+        val ayahs = ayahIds.chunked(ARBITRARY_BATCH_CHUNK_SIZE).flatMap { idsChunk ->
+            ayahDao.getAyahsByIds(idsChunk)
+        }
 
         if (ayahs.isEmpty()) return null
 
@@ -185,11 +209,19 @@ class QuranRepository(
         val ayahByVerse = ayahs.associateBy { it.ayahNo }
         val verseIds = ayahs.map { it.ayahId }
 
-        val wordsFlat = ayahWordDao.getWordsForAyahs(verseIds, scriptCode)
+        val wordsFlat = if (arabicEnabled) {
+            verseIds.chunked(ARBITRARY_BATCH_CHUNK_SIZE).flatMap { verseIdChunk ->
+                ayahWordDao.getWordsForAyahs(verseIdChunk, scriptCode)
+            }
+        } else emptyList()
+
         val wordsByAyahId = groupWordsByAyahIdWithLastFlags(wordsFlat)
 
         val pageByAyahId = if (verseIds.isNotEmpty()) {
-            mushafDao.getPagesForAyahIds(mushafId, verseIds)
+            verseIds.chunked(ARBITRARY_BATCH_CHUNK_SIZE)
+                .flatMap { verseIdChunk ->
+                    mushafDao.getPagesForAyahIds(mushafId, verseIdChunk)
+                }
                 .associate { it.ayahId to it.pageNumber }
         } else {
             emptyMap()
@@ -621,14 +653,18 @@ class QuranRepository(
     ) = arabicSearchDao.pageMatchedAyahs(ftsQuery, limit, offset)
 
     suspend fun searchSurahNos(query: String): List<Int> {
-        return surahSearchDao.searchSurahNos(
-            query
-                .trim()
-                .lowercase()
-                .split(Regex("\\s+"))
-                .filter { it.isNotBlank() }
-                .joinToString(" ") { "$it*" }
-        ).map { it.surahNo }
+        try {
+            return surahSearchDao.searchSurahNos(
+                query
+                    .trim()
+                    .lowercase()
+                    .split(Regex("\\s+"))
+                    .filter { it.isNotBlank() }
+                    .joinToString(" ") { "$it*" }
+            ).map { it.surahNo }
+        } catch (_: Exception) {
+            return emptyList()
+        }
     }
 
     suspend fun searchSurahs(query: String): List<SurahWithLocalizations> {
@@ -641,7 +677,9 @@ class QuranRepository(
         return surahNos.mapNotNull { byNo[it] }
     }
 
-    suspend fun getChapterName(chapterNo: Int): String {
+    suspend fun getChapterName(
+        chapterNo: Int,
+    ): String {
         if (chapterNo <= 0) return ""
 
         return appFallbackLanguageCodes()
@@ -688,7 +726,7 @@ class QuranRepository(
     suspend fun getPageForVerse(surahNo: Int, ayahNo: Int, mushafId: Int): Int? {
         if (mushafId <= 0 || surahNo <= 0 || ayahNo <= 0) return null
 
-        return mushafDao.getPageForVerse(mushafId, ayahId = QuranUtils.getAyahId(surahNo, ayahNo))
+        return mushafDao.getPageForVerse(mushafId, ayahId = QuranMeta.getAyahId(surahNo, ayahNo))
     }
 
     suspend fun getFirstPageOfJuz(juzNo: Int, scriptCode: String? = null): Int? {
@@ -744,6 +782,14 @@ class QuranRepository(
     suspend fun isVerseValid4Chapter(chapterNo: Int, verseNo: Int): Boolean {
         return getSurah(chapterNo)?.isVerseValid(verseNo) == true
     }
+}
+
+private fun List<Int>.isContiguousRange(): Boolean {
+    if (size <= 1) return true
+    for (i in 1 until size) {
+        if (this[i] != this[i - 1] + 1) return false
+    }
+    return true
 }
 
 private fun mergeAyahIdIntervals(intervals: List<Pair<Int, Int>>): List<Pair<Int, Int>> {

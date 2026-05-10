@@ -218,7 +218,7 @@
 \n
 \nനിങ്ങൾ അത് വീണ്ടും ഡൗൺലോഡ് ചെയ്യേണ്ടതുണ്ട്.</string>
     <string name="titleRecitationCleanup">പാരായണം ഇല്ലാതാക്കണോ\?</string>
-    <string name="msgRecitationCleanup" formatted="false">%sൽ നിന്ന് സേവ് ചെയ്ത എല്ലാ പാരായണങ്ങളും ഇല്ലാതാക്കപ്പെടും.</string>
+    <string name="msgRecitationCleanup" formatted="false">%sൽ നിന്ന് സേവ് ചെയ്ത എല്ലാ പാരായണങ്ങളും ഇല്ലാതാക്കപ്പെടും. ഓരോ സൂറത്തും പ്രത്യേകം ഡിലീറ്റ് ചെയ്യാൻ സെറ്റിംഗ്സിൽ പോകുക.</string>
     <string name="titleScriptCleanup">സ്ക്രിപ്റ്റ് ഇല്ലാതാക്കണോ\?</string>
     <string name="msgScriptCleanup" formatted="false">%s സ്‌ക്രിപ്റ്റും അതിന്റെ സംഭരിച്ചിരിക്കുന്ന എല്ലാ ഫോണ്ടുകളും ഇല്ലാതാക്കപ്പെടും. അവ ഉപയോഗിക്കുന്നതിന് നിങ്ങൾ വീണ്ടും ഡൗൺലോഡ് ചെയ്യേണ്ടതുണ്ട്.</string>
     <string name="github">ഗിറ്റ്ഹബ്</string>
@@ -392,6 +392,7 @@
     <string name="playWord">വാക്ക് കേൾപ്പിക്കുക</string>
     <string name="previousWord">മുമ്പത്തെ വാക്ക്</string>
     <string name="nextWord">അടുത്ത വാക്ക്</string>
+    <string name="wbwSelectLanguage">വേഡ്-ബൈ-വേഡ് ഭാഷ തിരഞ്ഞെടുക്കുക</string>
     <string name="results">ഫലങ്ങൾ</string>
     <string name="titleRecentSearches">സമീപകാല തിരയലുകൾ</string>
     <string name="searchInQuran">ഖുർആനിൽ തിരയുക</string>
@@ -408,5 +409,31 @@
     <string name="discord">ഡിസ്‌കോർഡ്</string>
     <string name="strTitleDownloadSunnahApp">SunnahApp ഡൗൺലോഡ് ചെയ്യുക</string>
     <string name="tajweedColors">താജ്‌വീദിന്റെ നിറങ്ങൾ</string>
-</resources>
+    <string name="similarVerses">സമാന ആയത്തുകൾ</string>
+    <string name="noSimilarVerses">ഈ ആയത്തിന് സമാനമായ ആയത്തുകൾ ഇല്ല.</string>
+    <string name="countSimilarVerses" formatted="false">%1$s ന് %2$d സമാന ആയത്തുകൾ ഉണ്ട്</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% പൊരുത്തം · സ്കോർ %2$d</string>
+    <string name="moreOptions">കൂടുതൽ ഓപ്ഷനുകൾ</string>
+    <string name="whenChapterEnds">സൂറത്ത് അവസാനിക്കുമ്പോൾ</string>
+    <string name="whenChapterEndsDesc">നിലവിലെ സൂറത്ത് പ്ലേ ചെയ്യുന്നത് അവസാനിച്ച ശേഷം എന്ത് സംഭവിക്കണമെന്ന് തിരഞ്ഞെടുക്കുക.</string>
+    <string name="stopPlayback">പ്ലേബാക്ക് നിർത്തുക</string>
+    <string name="playNextSurah">അടുത്ത സൂറത്ത് പ്ലേ ചെയ്യുക</string>
+    <string name="repeatCurrentSurah">നിലവിലെ സൂറത്ത് ആവർത്തിക്കുക</string>
+    <string name="reset">റീസെറ്റ് ചെയ്യുക</string>
+    <string name="selectAll">എല്ലാം തിരഞ്ഞെടുക്കുക</string>
+    <string name="filterTranslationsDisabledNote">അറബി തിരയൽ ഓണായിരിക്കുമ്പോൾ വിവർത്തനങ്ങളിൽ തിരയുന്നില്ല.</string>
+    <string name="filterTranslationsEmpty">ഇതുവരെ വിവർത്തനങ്ങളൊന്നും ഡൗൺലോഡ് ചെയ്തിട്ടില്ല.</string>
 
+    <string name="wbwAudioTimingsCouldNotLoad">വാക്കുകളുടെ ടൈമിംഗ് ലോഡ് ചെയ്യാനായില്ല. കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="wbwAudioCouldNotPlay">വാക്കിന്റെ ഓഡിയോ പ്ലേ ചെയ്യാനായില്ല.</string>
+    <string name="wbwAudioDownloadHint">ഓഫ്‌ലൈനായി കേൾക്കാനും കൂടുതൽ സ്മൂത്ത് പ്ലേബാക്കിനുമായി വാക്ക്‌പ്രതി ഓഡിയോ ഡൗൺലോഡ് ചെയ്യുക.</string>
+    <string name="wbwAudio">വാക്ക്‌പ്രതി ഓഡിയോ</string>
+    <string name="wbwAudioDownloadAll">എല്ലാം ഡൗൺലോഡ് ചെയ്യുക</string>
+    <string name="wbwAudioDownloadAllConfirm">എല്ലാ സൂറങ്ങൾക്കുമുള്ള വാക്ക്‌പ്രതി തിലാവത്ത് ഓഡിയോ ഡൗൺലോഡ് ചെയ്യണോ? ഇത് കൂടുതൽ സ്റ്റോറേജും മൊബൈൽ ഡാറ്റയും ഉപയോഗിക്കാം.</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">എല്ലാം ഡൗൺലോഡ് ചെയ്യുന്നതിന് മുമ്പ് ഓരോ സൂറയുടെയും ഡൗൺലോഡ് പൂർത്തിയാകാൻ കാത്തിരിക്കുക.</string>
+    <string name="wbwAudioChapterWaitForBulk">ഒരു സൂറ ഡൗൺലോഡ് ചെയ്യുന്നതിന് മുമ്പ് മുഴുവൻ ഡൗൺലോഡ് പൂർത്തിയാകുന്നത് വരെ കാത്തിരിക്കുക.</string>
+    <string name="ontologyExplorer">വിഷയാന്വേഷകൻ</string>
+    <string name="thematicTopics">തീം അടിസ്ഥാനത്തിലുള്ള വിഷയങ്ങൾ</string>
+    <string name="englishContentOnly">ഈ പേജിലെ ഉള്ളടക്കം ഇംഗ്ലീഷ് ഭാഷയിൽ മാത്രമാണ് ലഭ്യം.</string>
+    <string name="estimatedSize">അനുമാനിത വലുപ്പം: %s</string>
+</resources>

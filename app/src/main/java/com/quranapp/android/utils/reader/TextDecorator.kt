@@ -3,29 +3,32 @@ package com.quranapp.android.utils.reader
 import android.content.Context
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Typography
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextDirection
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alfaazplus.sunnah.ui.theme.appFontFamily
 import com.alfaazplus.sunnah.ui.theme.fontUrdu
 import com.quranapp.android.compose.components.reader.MushafLineLayout
-import com.quranapp.android.db.entities.quran.AyahWordEntity
 import com.quranapp.android.utils.extensions.getDimension
 import com.quranapp.android.utils.univ.StringUtils
 
-data class TextBuilderParams(
+data class ComposeUiConfig(
     val context: Context,
-    val fontResolver: FontResolver,
-    val verseActions: VerseActions,
+    val textMeasurer: TextMeasurer,
+    val density: Density,
     val colors: ColorScheme,
     val type: Typography,
+)
+
+data class TextBuilderParams(
+    val uiConfig: ComposeUiConfig,
+    val verseActions: VerseActions,
+    val fontResolver: FontResolver,
     val arabicEnabled: Boolean,
     val script: String,
     val arabicSizeMultiplier: Float,
@@ -42,16 +45,12 @@ data class TextBuilderParams(
 }
 
 data class PageBuilderParams(
-    val context: Context,
-    val textMeasurer: TextMeasurer,
-    val colors: ColorScheme,
-    val type: Typography,
-    val density: Density,
+    val uiConfig: ComposeUiConfig,
     val contentWidthPx: Int,
     val isDark: Boolean,
 ) {
     fun toKey(): String {
-        return "$contentWidthPx:${density.density}:$isDark"
+        return "$contentWidthPx:${uiConfig.density.density}:$isDark"
     }
 }
 
@@ -65,7 +64,10 @@ data class TranslationPageBuilderParams(
 
 data class TranslationTextStyleParams(
     val slug: String,
-    val sizeMultiplier: Float
+    val type: Typography,
+    val sizeMultiplier: Float,
+    val useSmallSize: Boolean = false,
+    val baselineHeightMultiplier: Float = 1.5f
 )
 
 data class QuranTextStyleParams(
@@ -82,11 +84,13 @@ data class QuranTextStyleParams(
 
 fun getTranslationTextStyle(
     params: TranslationTextStyleParams,
-    baseLineHeightMultiplier: Float = 1.5f
 ): TextStyle {
     val isRtl = StringUtils.isRtlLanguage(params.slug)
     val isUrdu = TranslUtils.isUrdu(params.slug)
-    val resolvedFontSize = 16.sp * params.sizeMultiplier
+
+    val baselineFontSize = if (params.useSmallSize) params.type.bodyMedium.fontSize
+    else params.type.bodyLarge.fontSize
+    val resolvedFontSize = baselineFontSize * params.sizeMultiplier
 
     return TextStyle(
         textDirection = if (isRtl) TextDirection.Rtl else TextDirection.Ltr,
@@ -95,7 +99,7 @@ fun getTranslationTextStyle(
             includeFontPadding = true
         ),
         fontSize = resolvedFontSize,
-        lineHeight = if (isUrdu) resolvedFontSize * 2.5f else resolvedFontSize * baseLineHeightMultiplier,
+        lineHeight = if (isUrdu) resolvedFontSize * 2.5f else resolvedFontSize * params.baselineHeightMultiplier,
     )
 }
 
@@ -134,7 +138,9 @@ fun mushafCappedBaseStyleForScale(base: TextStyle, pageScale: Float): TextStyle 
         MUSHAF_FONT_SCALE_AT_MIN_WIDTH,
         MUSHAF_FONT_SCALE_AT_MAX_WIDTH
     )
+
     val scaled = (base.fontSize.value * cap).sp
+
     return base.copy(
         fontSize = scaled,
         lineHeight = (scaled.value * MUSHAF_LINE_HEIGHT_MULT).sp,
@@ -158,112 +164,13 @@ fun mushafScaleForWidth(lineInnerWidthDp: Float): Float {
 }
 
 
-fun fitMushafLineLayout(
-    words: List<AyahWordEntity>,
-    centered: Boolean,
-    cappedBaseStyle: TextStyle,
-    maxLineWidthPx: Float,
-    lineWidthBounded: Boolean,
-    density: Density,
-    textMeasurer: TextMeasurer,
-): MushafLineLayout {
-    if (words.isEmpty()) {
-        return MushafLineLayout(
-            fittedStyle = cappedBaseStyle,
-            centeredGap = 0.dp,
-        )
-    }
-
-    val baseGapPx =
-        with(density) { cappedBaseStyle.fontSize.toPx() * MUSHAF_CENTERED_GAP_FRACTION }
-    val minInterWordGapPx =
-        with(density) { cappedBaseStyle.fontSize.toPx() * MUSHAF_MIN_INTER_WORD_GAP_FRACTION }
-
-    val baseWidth = measureMushafLineWidth(
-        words = words,
-        centered = centered,
-        textMeasurer = textMeasurer,
-        style = cappedBaseStyle,
-        centeredGapPx = baseGapPx,
-        minInterWordGapPx = minInterWordGapPx,
-    ).coerceAtLeast(1f)
-
-    val shrinkOnly = when {
-        !lineWidthBounded -> 1f
-        baseWidth <= maxLineWidthPx -> 1f
-        else -> (maxLineWidthPx / baseWidth).coerceAtLeast(MUSHAF_LINE_SHRINK_MIN)
-    }
-
-    val fittedSp = (cappedBaseStyle.fontSize.value * shrinkOnly).sp
-    return MushafLineLayout(
-        fittedStyle = cappedBaseStyle.copy(
-            fontSize = fittedSp,
-            lineHeight = (fittedSp.value * MUSHAF_LINE_HEIGHT_MULT).sp,
-        ),
-        centeredGap = with(density) {
-            maxOf(baseGapPx, minInterWordGapPx).times(shrinkOnly).toDp()
-        },
-    )
-}
-
-private fun measureMushafLineWidth(
-    words: List<AyahWordEntity>,
-    centered: Boolean,
-    textMeasurer: TextMeasurer,
-    style: TextStyle,
-    centeredGapPx: Float,
-    minInterWordGapPx: Float,
-): Float {
-    var sum = 0f
-
-    for (word in words) {
-        sum += textMeasurer.measure(
-            text = AnnotatedString(word.text),
-            style = style,
-            softWrap = false,
-            maxLines = 1,
-            overflow = TextOverflow.Clip,
-        ).size.width
-    }
-
-    if (words.size > 1) {
-        val gapPerPair = if (centered) {
-            maxOf(centeredGapPx, minInterWordGapPx)
-        } else {
-            minInterWordGapPx
-        }
-        sum += gapPerPair * (words.size - 1)
-    }
-
-    return sum
-}
-
-fun measureMushafLineWidthForStyle(
-    words: List<AyahWordEntity>,
-    centered: Boolean,
-    textMeasurer: TextMeasurer,
-    style: TextStyle,
-    centeredGapPx: Float,
-    minInterWordGapPx: Float,
-): Float {
-    return measureMushafLineWidth(
-        words = words,
-        centered = centered,
-        textMeasurer = textMeasurer,
-        style = style,
-        centeredGapPx = centeredGapPx,
-        minInterWordGapPx = minInterWordGapPx,
-    )
-}
-
-
-private const val MUSHAF_LINE_HEIGHT_MULT = 2f
+const val MUSHAF_LINE_HEIGHT_MULT = 2f
 private const val MUSHAF_FONT_WIDTH_DP_MIN = 260f
-const val MUSHAF_FONT_WIDTH_DP_MAX = 720f
+const val MUSHAF_FONT_WIDTH_DP_MAX = 600f
 
 val MUSHAF_PAGE_HORIZONTAL_PADDING = 12.dp
 const val MUSHAF_FONT_SCALE_AT_MIN_WIDTH = 0.85f
-const val MUSHAF_FONT_SCALE_AT_MAX_WIDTH = 2f
+const val MUSHAF_FONT_SCALE_AT_MAX_WIDTH = 1.5f
 
 /** Inter-word gap as a fraction of font size for centered mushaf lines. */
 const val MUSHAF_CENTERED_GAP_FRACTION = 0.22f
@@ -272,4 +179,4 @@ const val MUSHAF_CENTERED_GAP_FRACTION = 0.22f
 const val MUSHAF_MIN_INTER_WORD_GAP_FRACTION = 0.1f
 
 /** When shrinking to fit, do not go below this fraction of the (screen-capped) base size. */
-private const val MUSHAF_LINE_SHRINK_MIN = 0.16f
+const val MUSHAF_LINE_SHRINK_MIN = 0.16f

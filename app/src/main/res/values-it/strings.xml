@@ -264,7 +264,7 @@
     <string name="strTitleDeleteTafsir">Rimuovere tafsir?</string>
     <string name="strMsgDeleteTafsir" formatted="false">Sei sicuro che vuoi rimuovere \"%s\"? Questo rimuoverà i dati del tafsir scaricato dal tuo dispositivo.</string>
     <string name="recitationCanBeFreedUp" formatted="false">È possibile liberare %1$d file di recitazione memorizzati da %2$d recitatori.</string>
-    <string name="msgRecitationCleanup" formatted="false">Tutte le recitazioni memorizzate da %s verranno eliminate.</string>
+    <string name="msgRecitationCleanup" formatted="false">Tutte le recitazioni memorizzate da %s verranno eliminate. Per eliminare individualmente le recitazioni per sura, vai nelle impostazioni.</string>
     <string name="nFiles" formatted="false">%d files</string>
     <string name="msgScriptCleanup" formatted="false">Lo script %s e tutti i suoi font verranno eliminati. Per continuare a usarli dopo averli eliminati, dovrai scaricarli di nuovo.</string>
     <string name="strLabelScienceReferences" formatted="false">%d fonti</string>
@@ -388,6 +388,7 @@
     <string name="playWord">Riproduci parola</string>
     <string name="previousWord">Parola precedente</string>
     <string name="nextWord">Parola successiva</string>
+    <string name="wbwSelectLanguage">Seleziona la lingua parola per parola</string>
     <string name="results">Risultati</string>
     <string name="titleRecentSearches">Ricerche recenti</string>
     <string name="searchInQuran">Cerca nel Corano</string>
@@ -404,4 +405,31 @@
     <string name="discord">Discord</string>
     <string name="strTitleDownloadSunnahApp">Scarica SunnahApp</string>
     <string name="tajweedColors">Colori del Tajweed</string>
+    <string name="similarVerses">Versetti simili</string>
+    <string name="noSimilarVerses">Non ci sono versetti simili per questo versetto.</string>
+    <string name="countSimilarVerses" formatted="false">%1$s ha %2$d ayah simili</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% di corrispondenza · punteggio %2$d</string>
+    <string name="moreOptions">Altre opzioni</string>
+    <string name="whenChapterEnds">Quando finisce la sura</string>
+    <string name="whenChapterEndsDesc">Scegli cosa succede dopo la fine della riproduzione della sura corrente.</string>
+    <string name="stopPlayback">Interrompi riproduzione</string>
+    <string name="playNextSurah">Riproduci la sura successiva</string>
+    <string name="repeatCurrentSurah">Ripeti la sura corrente</string>
+    <string name="reset">Reimposta</string>
+    <string name="selectAll">Seleziona tutto</string>
+    <string name="filterTranslationsDisabledNote">Le traduzioni non vengono cercate mentre la ricerca in arabo è attiva.</string>
+    <string name="filterTranslationsEmpty">Nessuna traduzione scaricata finora.</string>
+
+    <string name="wbwAudioTimingsCouldNotLoad">Impossibile caricare la temporizzazione parola per parola. Controlla la connessione e riprova.</string>
+    <string name="wbwAudioCouldNotPlay">Impossibile riprodurre l\'audio della parola.</string>
+    <string name="wbwAudioDownloadHint">Scarica l\'audio parola per parola per ascoltare offline e avere una riproduzione più fluida.</string>
+    <string name="wbwAudio">Audio parola per parola</string>
+    <string name="wbwAudioDownloadAll">Scarica tutto</string>
+    <string name="wbwAudioDownloadAllConfirm">Scaricare l\'audio di recitazione parola per parola per tutte le sure? Potrebbe consumare molto spazio e dati mobili.</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">Attendi il completamento dei download delle singole sure prima di scaricare tutto.</string>
+    <string name="wbwAudioChapterWaitForBulk">Attendi il completamento del download completo prima di scaricare una singola sura.</string>
+    <string name="ontologyExplorer">Esplora argomenti</string>
+    <string name="thematicTopics">Argomenti per tema</string>
+    <string name="englishContentOnly">I contenuti di questa pagina sono disponibili solo in inglese.</string>
+    <string name="estimatedSize">Dimensione stimata: %s</string>
 </resources>

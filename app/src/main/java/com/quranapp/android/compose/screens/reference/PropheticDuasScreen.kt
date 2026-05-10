@@ -45,14 +45,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.quranapp.android.R
-import com.quranapp.android.activities.reference.ActivityReference
+import com.quranapp.android.components.ReferenceThumbnail
+import com.quranapp.android.components.ReferenceVerseModel
 import com.quranapp.android.components.quran.QuranPropheticDua
 import com.quranapp.android.compose.components.common.AppBar
 import com.quranapp.android.compose.components.common.BottomSheetMenu
 import com.quranapp.android.compose.components.common.BottomSheetMenuItem
 import com.quranapp.android.compose.components.dialogs.SimpleTooltip
 import com.quranapp.android.compose.theme.alpha
-import com.quranapp.android.utils.reader.factory.ReaderFactory.prepareReferenceVerseIntent
+import com.quranapp.android.utils.reader.factory.ReaderFactory
 import kotlinx.coroutines.delay
 import java.text.MessageFormat
 import java.util.regex.Pattern
@@ -96,7 +97,6 @@ fun PropheticDuasScreen(title: String? = null) {
         topBar = {
             AppBar(
                 title = barTitle,
-                bgColor = colorResource(R.color.colorBGHomePageItem),
                 searchQuery = searchQuery,
                 onSearchQueryChange = { searchQuery = it },
                 searchPlaceholder = stringResource(R.string.strHintSearchProphet),
@@ -141,7 +141,7 @@ fun PropheticDuasScreen(title: String? = null) {
                             top = 16.dp,
                             bottom = 64.dp,
                         ),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         items(
                             displayedProphets,
@@ -195,21 +195,21 @@ private fun PropheticDuaListItem(prophet: QuranPropheticDua.Prophet) {
                 R.string.strMsgPropheticDuaInQuran,
                 MessageFormat.format("{0} ({1})", prophet.name, prophet.honorific),
             )
-            val intent = prepareReferenceVerseIntent(
-                refTitle,
-                resources.getString(R.string.strMsgReferenceDuas),
-                arrayOf(),
-                prophet.chapters,
-                prophet.verses,
-            ).apply {
-                setClass(context, ActivityReference::class.java)
-            }
-            context.startActivity(intent)
+
+            ReaderFactory.startReferenceVerse(
+                context,
+                ReferenceVerseModel(
+                    title = refTitle,
+                    desc = resources.getString(R.string.strMsgReferenceDuas),
+                    chapters = prophet.chapters,
+                    verses = prophet.verses,
+                    thumbnail = prophet.thumbnail?.let { ReferenceThumbnail.RemoteUrl(it) }
+                )
+            )
         },
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
         border = BorderStroke(1.dp, colorScheme.outlineVariant.alpha(0.5f)),
     ) {
         Row(
@@ -231,7 +231,7 @@ private fun PropheticDuaListItem(prophet: QuranPropheticDua.Prophet) {
             ) {
                 Text(
                     text = primaryText,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,

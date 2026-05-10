@@ -333,7 +333,7 @@
     <string name="labelFreeUpSpace">Magbakante ng espasyo</string>
     <string name="msgDeleteTranslation" formatted="false">%1$s\n%2$s\n\nKailangan mong i-download itong muli.</string>
     <string name="titleRecitationCleanup">I-delete ang pagbigkas?</string>
-    <string name="msgRecitationCleanup" formatted="false">Lahat ng nakaimbak na pagbigkas mula sa %s ay ide-delete.</string>
+    <string name="msgRecitationCleanup" formatted="false">Lahat ng nakaimbak na pagbigkas mula sa %s ay ide-delete. Upang isa-isang i-delete ang mga pagbigkas ayon sa surah, pumunta sa settings.</string>
     <string name="titleScriptCleanup">I-delete ang script?</string>
     <string name="noResults">Walang resulta</string>
     <string name="onboardDescTafsir">Pumili ng komentaryo na babasahin kasabay ng mga bersikulo. Maaari kang mag-download at mag-ayos ng mga tafsir sa mga setting.</string>
@@ -390,6 +390,7 @@
     <string name="playWord">Patugtugin ang salita</string>
     <string name="previousWord">Nakaraang salita</string>
     <string name="nextWord">Susunod na salita</string>
+    <string name="wbwSelectLanguage">Pumili ng wika sa salita-salita</string>
     <string name="results">Mga Resulta</string>
     <string name="titleRecentSearches">Mga kamakailang paghahanap</string>
     <string name="searchInQuran">Maghanap sa Quran</string>
@@ -406,4 +407,31 @@
     <string name="discord">Discord</string>
     <string name="strTitleDownloadSunnahApp">I-download ang SunnahApp</string>
     <string name="tajweedColors">mga kulay ng tajweed</string>
+    <string name="similarVerses">Mga magkakatulad na talata</string>
+    <string name="noSimilarVerses">Walang magkakatulad na talata para sa talatang ito.</string>
+    <string name="countSimilarVerses" formatted="false">May %2$d magkakatulad na ayah ang %1$s</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% tugma · iskor %2$d</string>
+    <string name="moreOptions">Higit pang opsyon</string>
+    <string name="whenChapterEnds">Kapag natapos ang surah</string>
+    <string name="whenChapterEndsDesc">Piliin kung ano ang mangyayari pagkatapos tumugtog ang kasalukuyang surah.</string>
+    <string name="stopPlayback">Ihinto ang pag-playback</string>
+    <string name="playNextSurah">I-play ang susunod na surah</string>
+    <string name="repeatCurrentSurah">Ulitin ang kasalukuyang surah</string>
+    <string name="reset">I-reset</string>
+    <string name="selectAll">Piliin lahat</string>
+    <string name="filterTranslationsDisabledNote">Hindi kasama sa paghahanap ang mga pagsasalin kapag naka-on ang paghahanap sa Arabic.</string>
+    <string name="filterTranslationsEmpty">Wala pang na-download na pagsasalin.</string>
+
+    <string name="wbwAudioTimingsCouldNotLoad">Hindi ma-load ang timings ng bawat salita. Suriin ang koneksyon at subukang muli.</string>
+    <string name="wbwAudioCouldNotPlay">Hindi ma-play ang audio ng salita.</string>
+    <string name="wbwAudioDownloadHint">I-download ang word-by-word audio para sa offline na pakikinig at mas maayos na playback.</string>
+    <string name="wbwAudio">Word-by-word audio</string>
+    <string name="wbwAudioDownloadAll">I-download lahat</string>
+    <string name="wbwAudioDownloadAllConfirm">I-download ang word-by-word recitation audio ng lahat ng surah? Maaaring malaki ang magamit nitong storage at mobile data.</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">Hintayin munang matapos ang mga indibidwal na download ng surah bago i-download lahat.</string>
+    <string name="wbwAudioChapterWaitForBulk">Hintayin munang matapos ang buong download bago mag-download ng isang surah.</string>
+    <string name="ontologyExplorer">Tagahanap ng mga Paksa</string>
+    <string name="thematicTopics">Mga paksa ayon sa tema</string>
+    <string name="englishContentOnly">Ang nilalaman sa pahinang ito ay magagamit lamang sa wikang Ingles.</string>
+    <string name="estimatedSize">Tinatayang laki: %s</string>
 </resources>

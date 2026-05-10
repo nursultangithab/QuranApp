@@ -244,7 +244,7 @@
     <string name="verseSyncOn">آيت جي هم وقت سازي: کوليو</string>
     <string name="onboardDescTranslations">توهان ڪڏهن به هن کي بعد ۾ تبديل ڪري سگهو ٿا. توهان سيٽنگز مان وڌيڪ ترجما ڊائون لوڊ ڪري سگهو ٿا.</string>
     <string name="downloadRecitations">تلاوتون ڊائونلوڊ ڪريو</string>
-    <string name="msgRecitationCleanup" formatted="false">%s کان سڀئي ذخيرو ٿيل تلاوتون ختم ٿي وينديون.</string>
+    <string name="msgRecitationCleanup" formatted="false">%s کان سڀئي ذخيرو ٿيل تلاوتون ختم ٿي وينديون. سورة جي حساب سان انفرادي طور تي تلاوت ختم ڪرڻ لاءِ سيٽنگز ۾ وڃو.</string>
     <string name="strTitleFootnotes">حاشيہ</string>
     <string name="verseSyncOff">آيت جي هم وقت سازي: بند ڪريو</string>
     <string name="strPreviewTextTransl">الله ٻاجهاري مھربان جي نالي سان ( شروع )</string>
@@ -314,6 +314,7 @@
     <string name="nextHizb">اڳيون حزب</string>
     <string name="nextJuz">اڳيون جُز</string>
     <string name="nextWord">اڳيون لفظ</string>
+    <string name="wbwSelectLanguage">لفظ بعد لفظ ٻولي چونڊيو</string>
     <string name="noContinueDownload">نه، جاري رکو</string>
     <string name="noNoteProvided">ڪوبه نوٽ موجود ناهي…</string>
     <string name="noResults">ڪي به نتيجا ناهن</string>
@@ -403,4 +404,31 @@
     <string name="wordNo">لفظ %d</string>
     <string name="yesCancelDownload">ها، رد ڪريو</string>
     <string name="tajweedColors">تاجويد جا رنگ</string>
+    <string name="similarVerses">هڪجهڙيون آيتون</string>
+    <string name="noSimilarVerses">هن آيت لاءِ ڪا هڪجهڙي آيت موجود ناهي۔</string>
+    <string name="countSimilarVerses" formatted="false">%1$s ۾ %2$d هڪجهڙيون آيتون آهن</string>
+    <string name="similarVerseRowMeta" formatted="false">%1$d%% مليو · اسڪور %2$d</string>
+    <string name="moreOptions">وڌيڪ اختيار</string>
+    <string name="whenChapterEnds">جڏهن سورت ختم ٿئي</string>
+    <string name="whenChapterEndsDesc">موجوده سورت جي تلاوت ختم ٿيڻ کان پوءِ ڇا ٿئي اهو چونڊيو۔</string>
+    <string name="stopPlayback">تلاوت بند ڪريو</string>
+    <string name="playNextSurah">ايندڙ سورت هلائو</string>
+    <string name="repeatCurrentSurah">موجوده سورت ٻيهر هلائو</string>
+    <string name="reset">ري سيٽ</string>
+    <string name="selectAll">سڀ چونڊيو</string>
+    <string name="filterTranslationsDisabledNote">عربي ڳولا چالو هجي ته ترجمن ۾ نٿي ڳوليو وڃي.</string>
+    <string name="filterTranslationsEmpty">اڃان تائين ڪو به ترجمي ڊائون لوڊ ناهي.</string>
+
+    <string name="wbwAudioTimingsCouldNotLoad">لفظن جي ٽائمنگ لوڊ نه ٿي سگهي۔ پنهنجو ڪنيڪشن چيڪ ڪري ٻيهر ڪوشش ڪريو۔</string>
+    <string name="wbwAudioCouldNotPlay">لفظ جو آڊيو هلائي نه سگهيو۔</string>
+    <string name="wbwAudioDownloadHint">آف لائين ٻڌڻ ۽ وڌيڪ هموار پلے بيڪ لاءِ لفظ بہ لفظ آڊيو ڊائون لوڊ ڪريو۔</string>
+    <string name="wbwAudio">لفظ بہ لفظ آڊيو</string>
+    <string name="wbwAudioDownloadAll">سڀ ڊائون لوڊ ڪريو</string>
+    <string name="wbwAudioDownloadAllConfirm">ڇا سڀني سورتن جي لفظ بہ لفظ تلاوت آڊيو ڊائون لوڊ ڪجي؟ هن سان گهڻي اسٽوريج ۽ موبائل ڊيٽا استعمال ٿي سگهي ٿي۔</string>
+    <string name="wbwAudioBulkWaitForChapterDownloads">سڀ ڊائون لوڊ ڪرڻ کان اڳ انفرادي سورتن جا ڊائون لوڊ مڪمل ٿيڻ ڏيو۔</string>
+    <string name="wbwAudioChapterWaitForBulk">هڪ سورت ڊائون لوڊ ڪرڻ کان اڳ مڪمل ڊائون لوڊ ختم ٿيڻ جو انتظار ڪريو۔</string>
+    <string name="ontologyExplorer">موضوعن جو ڳولاڪار</string>
+    <string name="thematicTopics">موضوع موجب عنوان</string>
+    <string name="englishContentOnly">هن صفحي جو مواد صرف انگريزي ٻولي ۾ موجود آهي.</string>
+    <string name="estimatedSize">اندازي مطابق سائيز: %s</string>
 </resources>
