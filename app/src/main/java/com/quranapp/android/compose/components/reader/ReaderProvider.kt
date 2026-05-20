@@ -11,10 +11,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.quranapp.android.R
 import com.quranapp.android.components.reader.ChapterVersePair
+import com.quranapp.android.compose.components.dialogs.WaitingDialog
 import com.quranapp.android.compose.components.reader.dialogs.BookmarkViewerData
 import com.quranapp.android.compose.components.reader.dialogs.BookmarkViewerSheet
 import com.quranapp.android.compose.components.reader.dialogs.FootnotePresenter
@@ -35,6 +37,7 @@ import com.quranapp.android.utils.quran.QuranMeta
 import com.quranapp.android.utils.reader.LocalVerseActions
 import com.quranapp.android.utils.reader.VerseActions
 import com.quranapp.android.utils.reader.atlas.LocalQuranAtlasBundle
+import com.quranapp.android.utils.reader.atlas.QuranAtlasLoader
 import com.quranapp.android.utils.reader.atlas.rememberQuranAtlasBundle
 import com.quranapp.android.utils.reader.factory.ReaderFactory
 import com.quranapp.android.utils.reader.wbw.WbwManager
@@ -82,6 +85,7 @@ fun ReaderProvider(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val bundle = rememberQuranAtlasBundle(viewModel.externalQuranDb)
+    val isAtlasImporting by QuranAtlasLoader.isImporting
 
     val controller = viewModel.controller
     val recitationState by controller.state.collectAsStateWithLifecycle()
@@ -150,8 +154,8 @@ fun ReaderProvider(
         LocalVerseActions provides remember {
             VerseActions(
                 onReferenceClick = { slugs, chapterNo, verses ->
-                quickReferenceData = QuickReferenceData(slugs, chapterNo, verses)
-            },
+                    quickReferenceData = QuickReferenceData(slugs, chapterNo, verses)
+                },
                 onVerseOption = { verse -> verseOptionsVerse = verse },
                 onFootnoteClick = { verse, footnote ->
                     Log.d("FOOTNOTE", verse, footnote)
@@ -194,19 +198,21 @@ fun ReaderProvider(
             onDismissTooltip = { activeTooltipWord = null },
             onForcePlay = ::playWord,
             onWordClick = { word ->
-                val shouldPlay = ReaderPreferences.getWbwRecitationEnabled()
+                coroutineScope.launch {
+                    val shouldPlay = ReaderPreferences.getWbwRecitationEnabled()
 
-                if (shouldPlay) {
-                    playWord(word)
-                }
+                    if (shouldPlay) {
+                        playWord(word)
+                    }
 
-                val tooltipEnabled =
-                    ReaderPreferences.getWbwTooltipShowTranslation() || ReaderPreferences.getWbwTooltipShowTransliteration()
+                    val tooltipEnabled =
+                        ReaderPreferences.getWbwTooltipShowTranslation() || ReaderPreferences.getWbwTooltipShowTransliteration()
 
-                activeTooltipWord = if (tooltipEnabled) {
-                    word
-                } else {
-                    null
+                    activeTooltipWord = if (tooltipEnabled) {
+                        word
+                    } else {
+                        null
+                    }
                 }
             },
             toggleWbwSheet = { data ->
@@ -216,6 +222,11 @@ fun ReaderProvider(
         )
     ) {
         content()
+
+        WaitingDialog(
+            isOpen = isAtlasImporting,
+            text = stringResource(R.string.msgPreparingPrebuiltAtlas)
+        )
 
         VerseOptionsSheet(
             vwd = verseOptionsVerse,

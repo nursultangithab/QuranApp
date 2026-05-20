@@ -245,6 +245,7 @@
     <string name="strLabelWhatsappStyling">WhatsApp стили</string>
     <string name="strLabelIncludeArabic">Арабча текстти кошуу</string>
     <string name="strLabelIncludeFootnotes">Шилтемелерди камтуу</string>
+    <string name="includeBookmarkNote">Кыстарма эскертүүсүн кошуу (эгер бар болсо)</string>
     <string name="strLabelQuickLinks">Ыкчам шилтемелер</string>
     <string name="strLabelLater">Кийинчерээк</string>
     <string name="strHintSearch">Издөө</string>
@@ -435,4 +436,5 @@
     <string name="thematicTopics">Темалар боюнча бөлүмдөр</string>
     <string name="englishContentOnly">Бул беттеги мазмун англис тилинде гана жеткиликтүү.</string>
     <string name="estimatedSize">Болжолдуу өлчөмү: %s</string>
+    <string name="msgPreparingPrebuiltAtlas">Куран тексти биринчи жолу даярдалууда. Бул бир нече секунд талап кылат.</string>
 </resources>

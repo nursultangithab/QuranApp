@@ -37,7 +37,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.alfaazplus.sunnah.ui.theme.fontUrdu
+import com.quranapp.android.compose.theme.fontUrdu
 import com.quranapp.android.R
 import com.quranapp.android.components.quran.subcomponents.Footnote
 import com.quranapp.android.compose.components.common.Chip
@@ -86,12 +86,12 @@ fun FootnotePresenter(
         contentColor = colorScheme.onSurface,
         contentWindowInsets = { WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom) },
     ) {
-        PresentSheetContent(data)
+        SheetContent(data)
     }
 }
 
 @Composable
-private fun PresentSheetContent(data: FootnotePresenterData) {
+private fun SheetContent(data: FootnotePresenterData) {
     val context = LocalContext.current
     val translFactory = QuranTranslationFactory.remember(context)
 

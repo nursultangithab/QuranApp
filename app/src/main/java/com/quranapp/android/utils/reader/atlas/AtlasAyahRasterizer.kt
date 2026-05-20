@@ -6,27 +6,42 @@ import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.Rect
-import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.core.graphics.createBitmap
 import com.quranapp.android.db.entities.quran.AyahWordEntity
 import java.io.ByteArrayOutputStream
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-private data class WordGlyphLayout(
-    val widthPx: Float,
-    val glyphScale: Float,
-    val prepared: List<AtlasPreparedGlyphRaster>,
-    val tightMinY: Float,
-    val tightHeightPx: Float,
-)
-
-private data class AtlasPreparedGlyphRaster(
+data class AtlasPreparedGlyph(
     val x: Float,
     val y: Float,
     val glyph: AtlasGlyphJson,
 )
 
+private data class WordGlyphLayout(
+    val widthPx: Float,
+    val glyphScale: Float,
+    val prepared: List<AtlasPreparedGlyph>,
+    val tightMinY: Float,
+    val tightHeightPx: Float,
+)
+
+
+/**
+ * A software-backed rasterizer for rendering Quran Ayahs from a texture atlas.
+ *
+ * IMPORTANT PERFORMANCE NOTE:
+ * This rasterizer uses a software [Canvas] and [Bitmap] for rendering. This means all drawing
+ * operations happen on the CPU.
+ *
+ * Use cases:
+ * - Static widgets (e.g., VotdWidgetReceiver)
+ * - Image sharing/export (e.g., QuranVerseWebHtml)
+ *
+ * AVOID using this in the main UI reader or scrollable lists, as it will cause jank and high
+ * memory pressure. For the main UI, use QuranAtlasText which is hardware-accelerated.
+ */
 object AtlasAyahRasterizer {
 
     /**
@@ -109,16 +124,17 @@ object AtlasAyahRasterizer {
 
         val bitmapH = totalHeight.roundToInt().coerceAtLeast(1)
 
-        val bitmap = Bitmap.createBitmap(bitmapW, bitmapH, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(bitmapW, bitmapH)
         val canvas = Canvas(bitmap)
-
-        val androidAtlas = bundle.bitmap.asAndroidBitmap()
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
             colorFilter = PorterDuffColorFilter(argbColor, PorterDuff.Mode.SRC_IN)
         }
 
         var yLine = 0f
+
+        val singleTexture = if (bundle.textureCount == 1) bundle.singleAndroidTexture()
+        else null
 
         for ((lineIndex, triple) in lineMetrics.withIndex()) {
             val (line, contentW, lbH) = triple
@@ -138,12 +154,16 @@ object AtlasAyahRasterizer {
                     val dstW = (glyph.w * layout.glyphScale).roundToInt().coerceAtLeast(1)
                     val dstH = (glyph.h * layout.glyphScale).roundToInt().coerceAtLeast(1)
 
-                    canvas.drawBitmap(
-                        androidAtlas,
-                        Rect(glyph.x, glyph.y, glyph.x + glyph.w, glyph.y + glyph.h),
-                        Rect(dstLeft, dstTop, dstLeft + dstW, dstTop + dstH),
-                        paint,
-                    )
+                    val texture = singleTexture ?: bundle.androidTextureForGlyph(glyph)
+
+                    if (texture != null) {
+                        canvas.drawBitmap(
+                            texture,
+                            Rect(glyph.x, glyph.y, glyph.x + glyph.w, glyph.y + glyph.h),
+                            Rect(dstLeft, dstTop, dstLeft + dstW, dstTop + dstH),
+                            paint,
+                        )
+                    }
                 }
 
                 if (i != line.lastIndex) {
@@ -240,7 +260,7 @@ object AtlasAyahRasterizer {
         fallbackHeightPx: Float,
         fontSizePx: Float,
     ): WordGlyphLayout {
-        val prepared = ArrayList<AtlasPreparedGlyphRaster>(placements.size)
+        val prepared = ArrayList<AtlasPreparedGlyph>(placements.size)
         var currentX = 0f
 
         for (p in placements) {
@@ -250,7 +270,7 @@ object AtlasAyahRasterizer {
                 val x = currentX + p.xOffsetFu * fontScale + glyph.bearingX * glyphScale
                 val y = baselineY - p.yOffsetFu * fontScale - glyph.bearingY * glyphScale
 
-                prepared.add(AtlasPreparedGlyphRaster(x.toFloat(), y.toFloat(), glyph))
+                prepared.add(AtlasPreparedGlyph(x.toFloat(), y.toFloat(), glyph))
             }
 
             currentX += p.xAdvanceFu.toFloat() * fontScale

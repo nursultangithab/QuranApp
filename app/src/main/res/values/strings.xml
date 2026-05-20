@@ -189,6 +189,7 @@
     <string name="strLabelWhatsappStyling">Whatsapp styling</string>
     <string name="strLabelIncludeArabic">Include arabic</string>
     <string name="strLabelIncludeFootnotes">Include footnotes</string>
+    <string name="includeBookmarkNote">Include bookmark note (if any)</string>
     <string name="strLabelQuickLinks">Quick links</string>
     <string name="strLabelLater">Later</string>
     <string name="titleGlobalSearch">Global Search</string>
@@ -460,4 +461,8 @@
     <string name="thematicTopics">Topics by Theme</string>
     <string name="englishContentOnly">Content on this page is available in English only.</string>
     <string name="estimatedSize">Estimated size: %s</string>
+    <string name="msgPreparingPrebuiltAtlas">Preparing Quran script for the first time. This will take a few seconds.</string>
+
+    <string name="recitationPlayer">Recitation Player</string>
+    <string name="desc_recitation_player_widget">Control Quran recitation from your home screen</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.alfaazplus.sunnah.ui.utils.shared_preference
+package com.quranapp.android.compose.utils.preferences
 
 import android.content.Context
 import androidx.compose.runtime.Composable
@@ -8,7 +8,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.alfaazplus.sunnah.ui.utils.shared_preference.DataStoreManager.flowMultiple
+import com.quranapp.android.compose.utils.preferences.DataStoreManager.flowMultiple
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -58,15 +58,31 @@ object DataStoreManager {
             )
     }
 
+    /**
+     * Blocking read — uses [runBlocking]. Do not call from the main thread; it can cause ANRs.
+     * Prefer [readFirst] from a coroutine instead.
+     */
     fun <T> read(prefKey: PrefKey<T>): T {
         return read(prefKey.key, prefKey.default)
     }
 
+    /**
+     * Blocking read — uses [runBlocking]. Do not call from the main thread; it can cause ANRs.
+     * Prefer [readFirst] from a coroutine instead.
+     */
     fun <T> read(key: Preferences.Key<T>, defaultValue: T): T {
         return runBlocking {
-            val preferences = appContext.dataStore.data.first()
-            preferences[key] ?: defaultValue
+            readFirst(key, defaultValue)
         }
+    }
+
+    suspend fun <T> readFirst(prefKey: PrefKey<T>): T {
+        return readFirst(prefKey.key, prefKey.default)
+    }
+
+    suspend fun <T> readFirst(key: Preferences.Key<T>, defaultValue: T): T {
+        val preferences = appContext.dataStore.data.first()
+        return preferences[key] ?: defaultValue
     }
 
     suspend fun <T> write(prefKey: PrefKey<T>, value: T) {

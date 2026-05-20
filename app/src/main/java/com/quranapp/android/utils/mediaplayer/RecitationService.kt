@@ -1,7 +1,7 @@
 package com.quranapp.android.utils.mediaplayer
 
 import android.app.PendingIntent
-import android.content.ContentResolver
+import android.content.Context
 import android.content.IntentFilter
 import android.media.AudioManager
 import android.os.Build
@@ -9,7 +9,6 @@ import android.os.Bundle
 import android.os.Looper
 import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -25,16 +24,17 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.PlayerMessage
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.session.CommandButton
+import androidx.media3.session.LibraryResult
+import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
-import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionResult
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
 import com.quranapp.android.R
 import com.quranapp.android.activities.ActivityReader
 import com.quranapp.android.api.models.mediaplayer.ChapterTimingMetadata
@@ -44,10 +44,13 @@ import com.quranapp.android.api.models.mediaplayer.ResolvedAudioResult
 import com.quranapp.android.components.reader.ChapterVersePair
 import com.quranapp.android.compose.components.player.dialogs.AudioEndBehaviour
 import com.quranapp.android.compose.components.player.dialogs.AudioOption
+import com.quranapp.android.compose.utils.appLocale
+import com.quranapp.android.compose.utils.formatString
 import com.quranapp.android.compose.utils.preferences.RecitationPreferences
 import com.quranapp.android.compose.utils.preferences.RecitationPreferences.RECITATION_MIN_REPEAT_COUNT
 import com.quranapp.android.db.DatabaseProvider
 import com.quranapp.android.utils.Log
+import com.quranapp.android.utils.quran.QuranMeta
 import com.quranapp.android.utils.reader.factory.ReaderFactory
 import com.quranapp.android.utils.univ.ErrorEvent
 import com.quranapp.android.utils.univ.EventBus
@@ -68,10 +71,11 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 @OptIn(UnstableApi::class)
-class RecitationService : MediaSessionService() {
+class RecitationService : MediaLibraryService() {
 
     companion object {
         const val MILLIS_MULTIPLIER = 100L
@@ -91,8 +95,6 @@ class RecitationService : MediaSessionService() {
         const val EXTRA_SEEK_AMOUNT = "seek_amount"
         const val EXTRA_FROM_USER = "from_user"
 
-        private const val SEEK_STEP_MS = 5000L
-
         /** Max bytes for HTTP chapter audio in [SimpleCache] (LRU evicted when full). */
         private const val RECITATION_CACHE_MAX_BYTES = 512L * 1024 * 1024
 
@@ -105,7 +107,7 @@ class RecitationService : MediaSessionService() {
          * Process-wide cache for streamed `https` chapter audio. Persists across [RecitationService]
          * instances; not cleared on service destroy.
          */
-        private fun recitationCache(context: android.content.Context): SimpleCache {
+        private fun recitationCache(context: Context): SimpleCache {
             synchronized(recitationCacheLock) {
                 recitationSimpleCache?.let { return it }
 
@@ -127,8 +129,9 @@ class RecitationService : MediaSessionService() {
         val sharedState = MutableStateFlow(RecitationServiceState.EMPTY)
     }
 
-    private var mediaSession: MediaSession? = null
-    private lateinit var player: ExoPlayer
+    private var mediaLibrarySession: MediaLibrarySession? = null
+    private lateinit var player: SessionPlayer
+
     private lateinit var audioRepository: RecitationAudioRepository
     private lateinit var fileUtils: FileUtils
 
@@ -144,17 +147,16 @@ class RecitationService : MediaSessionService() {
     }
 
     private var _singleTrackTimingMetadata = MutableStateFlow<ChapterTimingMetadata?>(null)
-    private var _verseClipPlan = MutableStateFlow<VerseClipPlan?>(null)
+    internal var _verseClipPlan = MutableStateFlow<VerseClipPlan?>(null)
 
     private val singleTrackTimingMetadata get() = _singleTrackTimingMetadata.value
-    private val verseClipPlan get() = _verseClipPlan.value
 
     private var verseTrackingJob: Job? = null
     private var latestPlaybackRequestId: Long = 0L
     private val chapterResolutionRequests =
         mutableMapOf<AudioResolutionRequest, Deferred<ResolvedAudioResult>>()
 
-    private var repeatMessage: androidx.media3.exoplayer.PlayerMessage? = null
+    private var repeatMessage: PlayerMessage? = null
     private var repeatRemainingPlaysForCurrentItem: Int = 0
     private var repeatScheduleGeneration: Long = 0L
 
@@ -203,21 +205,21 @@ class RecitationService : MediaSessionService() {
 
             launch {
                 state.collectLatest { newState ->
-                    mediaSession?.setSessionExtras(newState.toBundle())
+                    mediaLibrarySession?.setSessionExtras(newState.toBundle())
                 }
             }
         }
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaLibrarySession
 
     override fun onDestroy() {
         unregisterReceiver(headsetReceiver)
         audioRepository.cancelAll()
-        mediaSession?.run {
+        mediaLibrarySession?.run {
             player.release()
             release()
-            mediaSession = null
+            mediaLibrarySession = null
         }
         serviceScope.cancel()
         sharedState.value = RecitationServiceState.EMPTY
@@ -241,7 +243,7 @@ class RecitationService : MediaSessionService() {
         val dataSourceFactory = DefaultDataSource.Factory(this, cacheDataSourceFactory)
         val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
 
-        player = ExoPlayer.Builder(this)
+        val basePlayer = ExoPlayer.Builder(this)
             .setMediaSourceFactory(mediaSourceFactory)
             .setLoadControl(loadControl)
             .build().apply {
@@ -252,18 +254,19 @@ class RecitationService : MediaSessionService() {
                 )
                 addListener(playerListener)
             }
+
+        player = SessionPlayer(this, basePlayer)
     }
 
     private fun initializeMediaSession() {
-        mediaSession = MediaSession.Builder(this, player)
+        mediaLibrarySession = MediaLibrarySession.Builder(this, player, mediaSessionCallback)
             .setId("RecitationService")
             .setSessionActivity(buildReaderPendingIntent(state.value.currentVerse))
-            .setCallback(mediaSessionCallback)
             .build()
     }
 
     private fun updateSessionActivity(verse: ChapterVersePair) {
-        mediaSession?.setSessionActivity(buildReaderPendingIntent(verse))
+        mediaLibrarySession?.setSessionActivity(buildReaderPendingIntent(verse))
     }
 
     private fun buildReaderPendingIntent(verse: ChapterVersePair): PendingIntent {
@@ -331,10 +334,17 @@ class RecitationService : MediaSessionService() {
         _state.value = state.value.block()
     }
 
-    private fun currentPosition(): Long =
-        verseClipPlan?.virtualPosition(player) ?: player.currentPosition
-
-    private fun currentDuration(): Long = verseClipPlan?.virtualDurationMs ?: player.duration
+    private fun updatePlaybackSnapshot(
+        isPlaying: Boolean = player.isPlaying,
+        isBuffering: Boolean = state.value.isBuffering,
+    ) {
+        updateState {
+            copy(
+                isPlaying = isPlaying,
+                isBuffering = isBuffering,
+            )
+        }
+    }
 
     // ==================== Playback controls ====================
 
@@ -349,7 +359,10 @@ class RecitationService : MediaSessionService() {
     }
 
     fun playControl() {
-        if (currentDuration() > 0 && currentPosition() < currentDuration()) {
+        val duration = player.duration
+        val position = player.currentPosition
+
+        if (duration > 0 && position < duration) {
             if (player.isPlaying) pauseMedia() else playMedia()
         } else {
             restartVerse()
@@ -366,52 +379,21 @@ class RecitationService : MediaSessionService() {
         _singleTrackTimingMetadata.value = null
         _verseClipPlan.value = null
 
-        updateState { copy(clipPlan = null) }
-
         repeatRemainingPlaysForCurrentItem = 0
         chapterResolutionRequests.values.forEach { it.cancel() }
         chapterResolutionRequests.clear()
+
+        updatePlaybackSnapshot(isPlaying = false, isBuffering = false)
     }
 
-    fun seek(amountOrDirection: Long) {
-        if (state.value.resolvingChapterNo != null) return
-
-        invalidateRepeatSchedule()
-
-        val isRelative =
-            amountOrDirection == ACTION_SEEK_LEFT || amountOrDirection == ACTION_SEEK_RIGHT
-
-        val plan = verseClipPlan
-        if (plan != null && !plan.isEmpty) {
-            val maxDuration = plan.virtualDurationMs.coerceAtLeast(0L)
-            val target = if (isRelative) {
-                val delta =
-                    if (amountOrDirection == ACTION_SEEK_RIGHT) SEEK_STEP_MS else -SEEK_STEP_MS
-                (plan.virtualPosition(player) + delta).coerceIn(0L, maxDuration)
-            } else {
-                amountOrDirection.coerceIn(0L, maxDuration)
-            }
-            plan.seekToVirtualPosition(player, target)
-        } else {
-            val d = player.duration
-            val upper = if (d == C.TIME_UNSET || d < 0) Long.MAX_VALUE else d
-
-            val target = if (isRelative) {
-                val delta =
-                    if (amountOrDirection == ACTION_SEEK_RIGHT) SEEK_STEP_MS else -SEEK_STEP_MS
-                (player.currentPosition + delta).coerceIn(0L, upper)
-            } else {
-                amountOrDirection.coerceIn(0L, upper)
-            }
-
-            player.seekTo(target)
-        }
+    private fun seek(amountOrDirection: Long) {
+        player.seekTo(amountOrDirection)
     }
 
     fun seekToVerse(verseNo: Int) {
         invalidateRepeatSchedule()
 
-        val plan = verseClipPlan
+        val plan = _verseClipPlan.value
 
         if (plan != null && !plan.isEmpty) {
             player.seekTo(plan.firstIndexForVerse(verseNo), 0L)
@@ -582,13 +564,13 @@ class RecitationService : MediaSessionService() {
             state.value.resolvingChapterNo != null ||
             state.value.currentVerse.chapterNo != chapterNo ||
             player.mediaItemCount == 0 ||
-            player.playbackState == Player.STATE_IDLE
+            this@RecitationService.player.playbackState == Player.STATE_IDLE
         ) return false
 
         val timingMeta = singleTrackTimingMetadata ?: return false
         if (timingMeta.chapterNo != chapterNo) return false
 
-        val plan = verseClipPlan
+        val plan = _verseClipPlan.value
         val canSeekWithPlan = plan != null && !plan.isEmpty
         val canSeekWithTiming = timingMeta.getVerseTiming(verseNo) != null
         if (!canSeekWithPlan && !canSeekWithTiming) return false
@@ -657,7 +639,6 @@ class RecitationService : MediaSessionService() {
                 settings = updatedSettings,
                 currentVerse = ChapterVersePair(chapterNo, startVerse),
                 pausedByHeadset = false,
-                clipPlan = plan,
             )
         }
     }
@@ -799,7 +780,7 @@ class RecitationService : MediaSessionService() {
         startVerse: Int
     ): MediaItem {
         return MediaItem.Builder()
-            .setMediaId("$chapterNo")
+            .setMediaId("chapter_$chapterNo")
             .setUri(audio.audioUri)
             .setMediaMetadata(buildMediaMetadata(chapterNo, startVerse).build())
             .build()
@@ -827,21 +808,17 @@ class RecitationService : MediaSessionService() {
         chapterNo: Int,
         verseNo: Int
     ): MediaMetadata.Builder {
-        val resId = R.drawable.dr_quran_wallpaper
-        val uri = (
-                ContentResolver.SCHEME_ANDROID_RESOURCE + "://" +
-                        resources.getResourcePackageName(resId) +
-                        '/' +
-                        resources.getResourceTypeName(resId) +
-                        '/' +
-                        resources.getResourceEntryName(resId)
-                ).toUri();
 
         return MediaMetadata.Builder()
             .setAlbumTitle(getString(R.string.strTitleHolyQuran))
             .setTitle(buildTitle(chapterNo, verseNo))
             .setArtist(buildArtist())
-            .setArtworkUri(uri)
+            .setArtworkUri(
+                RecitationChapterArtwork.getChapterArtworkUri(
+                    this,
+                    chapterNo
+                )
+            )
     }
 
     // ==================== Verse tracking ====================
@@ -855,7 +832,7 @@ class RecitationService : MediaSessionService() {
     private fun startVerseTracking() {
         verseTrackingJob?.cancel()
 
-        if (verseClipPlan != null) return
+        if (_verseClipPlan.value != null) return
 
         val timing = singleTrackTimingMetadata
         if (timing == null || !timing.hasVerseTiming) {
@@ -898,7 +875,7 @@ class RecitationService : MediaSessionService() {
      */
     private suspend fun invalidateChapterPlayback() {
         if (state.value.resolvingChapterNo != null) return
-        if (player.mediaItemCount == 0 || player.playbackState == Player.STATE_IDLE) return
+        if (player.mediaItemCount == 0 || this@RecitationService.player.playbackState == Player.STATE_IDLE) return
 
         val current = state.value.currentVerse
 
@@ -922,7 +899,7 @@ class RecitationService : MediaSessionService() {
         }
     }
 
-    private fun invalidateRepeatSchedule() {
+    fun invalidateRepeatSchedule() {
         repeatScheduleGeneration++
         repeatMessage?.cancel()
         repeatMessage = null
@@ -937,12 +914,12 @@ class RecitationService : MediaSessionService() {
 
         val myGeneration = repeatScheduleGeneration
 
-        val message = player.createMessage { _, _ ->
+        val message = player.exoPlayer.createMessage { _, _ ->
             if (myGeneration != repeatScheduleGeneration || !isSingleTrackRepeatEligible()) return@createMessage
 
             repeatRemainingPlaysForCurrentItem--
 
-            player.seekTo(startMs)
+            this@RecitationService.player.seekTo(startMs)
 
             // reschedule for next repeat
             scheduleRepeatForVerse(startMs, endMs)
@@ -979,15 +956,16 @@ class RecitationService : MediaSessionService() {
      * Only needed for single-track mode where one media item spans the whole chapter.
      */
     private fun updateNotificationMetadata(chapterNo: Int, verseNo: Int) {
-        if (player.mediaItemCount == 0) return
-
         scoped {
-            val updated = player.currentMediaItem?.buildUpon()
-                ?.setMediaMetadata(buildMediaMetadata(chapterNo, verseNo).build())
+            val meta = buildMediaMetadata(chapterNo, verseNo).build()
+
+            val realPlayer = player.exoPlayer
+            val updated = realPlayer.currentMediaItem?.buildUpon()
+                ?.setMediaMetadata(meta)
                 ?.build()
                 ?: return@scoped
 
-            player.replaceMediaItem(player.currentMediaItemIndex, updated)
+            realPlayer.replaceMediaItem(realPlayer.currentMediaItemIndex, updated)
         }
     }
 
@@ -997,7 +975,7 @@ class RecitationService : MediaSessionService() {
      * Only meaningful for clip-plan playlists where each item is a verse.
      */
     private fun checkVerseChanged() {
-        val mediaId = player.currentMediaItem?.mediaId ?: return
+        val mediaId = player.exoPlayer.currentMediaItem?.mediaId ?: return
         val parts = mediaId.split(':')
         if (parts.size != 2) return
 
@@ -1007,6 +985,7 @@ class RecitationService : MediaSessionService() {
         val resolved = ChapterVersePair(chapter, verse)
         if (resolved != state.value.currentVerse) {
             updateState { copy(currentVerse = resolved) }
+            updateNotificationMetadata(chapter, verse)
         }
     }
 
@@ -1031,6 +1010,10 @@ class RecitationService : MediaSessionService() {
         }
     }
 
+    fun refreshLibrary() {
+        mediaLibrarySession?.notifyChildrenChanged("root", Int.MAX_VALUE, null)
+    }
+
     // ==================== Session callback & command dispatch ====================
     private val playerListener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -1048,14 +1031,22 @@ class RecitationService : MediaSessionService() {
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
+            updatePlaybackSnapshot(isBuffering = playbackState == Player.STATE_BUFFERING)
+
             if (playbackState == Player.STATE_ENDED) {
                 handlePlaybackEnded()
             }
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
+            updateState {
+                copy(
+                    isPlaying = isPlaying,
+                    pausedByHeadset = if (isPlaying) false else pausedByHeadset,
+                )
+            }
+
             if (isPlaying) {
-                updateState { copy(pausedByHeadset = false) }
                 startVerseTracking()
             } else {
                 stopTrackings()
@@ -1068,41 +1059,20 @@ class RecitationService : MediaSessionService() {
         }
     }
 
-    private val mediaSessionCallback = object : MediaSession.Callback {
+    private val mediaSessionCallback = object : MediaLibrarySession.Callback {
         override fun onConnect(
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
         ): MediaSession.ConnectionResult {
-            val sessionCommands = SessionCommands.Builder()
+            val connectionResult = super.onConnect(session, controller)
+            val sessionCommands = connectionResult.availableSessionCommands.buildUpon()
                 .apply {
                     ALL_PLAYER_ACTIONS.forEach { add(SessionCommand(it, Bundle.EMPTY)) }
                 }.build()
 
             val resultBuilder = MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                 .setAvailableSessionCommands(sessionCommands)
-
-            if (session.isMediaNotificationController(controller) ||
-                session.isAutomotiveController(controller) ||
-                session.isAutoCompanionController(controller)
-            ) {
-                val previousVerseButton = CommandButton.Builder(CommandButton.ICON_PREVIOUS)
-                    .setDisplayName(getString(R.string.strLabelPreviousVerse))
-                    .setSessionCommand(
-                        SessionCommand(PreviousVerseCommand.ACTION, Bundle.EMPTY),
-                    )
-                    .build()
-
-                val nextVerseButton = CommandButton.Builder(CommandButton.ICON_NEXT)
-                    .setDisplayName(getString(R.string.strLabelNextVerse))
-                    .setSessionCommand(
-                        SessionCommand(NextVerseCommand.ACTION, Bundle.EMPTY),
-                    )
-                    .build()
-
-                resultBuilder.setCustomLayout(
-                    ImmutableList.of(previousVerseButton, nextVerseButton),
-                )
-            }
+                .setAvailablePlayerCommands(connectionResult.availablePlayerCommands)
 
             return resultBuilder.build()
         }
@@ -1116,6 +1086,216 @@ class RecitationService : MediaSessionService() {
             dispatchCommand(command.customAction, args)
 
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+        }
+
+        override fun onGetLibraryRoot(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            params: LibraryParams?
+        ): ListenableFuture<LibraryResult<MediaItem>> {
+            val rootItem = MediaItem.Builder()
+                .setMediaId("root")
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+                        .setIsPlayable(false)
+                        .setIsBrowsable(true)
+                        .build()
+                )
+                .build()
+
+            return Futures.immediateFuture(LibraryResult.ofItem(rootItem, params))
+        }
+
+        override fun onGetChildren(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            parentId: String,
+            page: Int,
+            pageSize: Int,
+            params: LibraryParams?
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
+            val future = SettableFuture.create<LibraryResult<ImmutableList<MediaItem>>>()
+            serviceScope.launch {
+                try {
+                    val children = mutableListOf<MediaItem>()
+                    when (parentId) {
+                        "root" -> {
+                            children.add(
+                                MediaItem.Builder()
+                                    .setMediaId("surahs_root")
+                                    .setMediaMetadata(
+                                        MediaMetadata.Builder()
+                                            .setTitle(getString(R.string.strTitleReaderChapters))
+                                            .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+                                            .setIsPlayable(false)
+                                            .setIsBrowsable(true)
+                                            .build()
+                                    )
+                                    .build()
+                            )
+                            children.add(
+                                MediaItem.Builder()
+                                    .setMediaId("reciters_root")
+                                    .setMediaMetadata(
+                                        MediaMetadata.Builder()
+                                            .setTitle(getString(R.string.strTitleSelectReciter))
+                                            .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_ARTISTS)
+                                            .setIsPlayable(false)
+                                            .setIsBrowsable(true)
+                                            .build()
+                                    )
+                                    .build()
+                            )
+                        }
+
+                        "surahs_root" -> {
+                            buildItems(children, true) {
+                                "chapter_$it"
+                            }
+                        }
+
+                        "reciters_root" -> {
+                            val reciters = RecitationModelManager.get(this@RecitationService)
+                                .getAllQuranModel()?.reciters.orEmpty()
+
+                            reciters.forEach { reciter ->
+                                children.add(
+                                    MediaItem.Builder()
+                                        .setMediaId("auto_reciter_${reciter.id}")
+                                        .setMediaMetadata(
+                                            MediaMetadata.Builder()
+                                                .setTitle(reciter.getReciterName())
+                                                .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+                                                .setIsPlayable(false)
+                                                .setIsBrowsable(true)
+                                                .build()
+                                        )
+                                        .build()
+                                )
+                            }
+                        }
+
+                        else -> {
+                            if (parentId.startsWith("auto_reciter_")) {
+                                val reciterId = parentId.removePrefix("auto_reciter_")
+
+                                buildItems(children, false) {
+                                    "chapter_${it}_reciter_${reciterId}"
+                                }
+                            }
+                        }
+                    }
+
+                    future.set(LibraryResult.ofItemList(children, null))
+                } catch (e: Exception) {
+                    future.setException(e)
+                }
+            }
+            return future
+        }
+
+        suspend fun buildItems(
+            children: MutableList<MediaItem>,
+            withArtist: Boolean,
+            idBuilder: (Int) -> String
+        ) =
+            withContext(Dispatchers.IO) {
+                val appLocale = appLocale()
+                val artist = if (withArtist) buildArtist() else null
+
+                for (i in QuranMeta.chapterRange) {
+                    val name = repository().getChapterName(i)
+
+                    children.add(
+                        MediaItem.Builder()
+                            .setMediaId(idBuilder(i))
+                            .setMediaMetadata(
+                                MediaMetadata.Builder()
+                                    .setTitle("$i. $name")
+                                    .setTitle(
+                                        formatString(
+                                            this@RecitationService,
+                                            appLocale,
+                                            $$"%1$d. %2$s",
+                                            i,
+                                            getString(R.string.strLabelSurah, name)
+                                        )
+                                    )
+                                    .apply {
+                                        if (artist != null) {
+                                            setArtist(artist)
+                                        }
+                                    }
+                                    .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                                    .setIsPlayable(true)
+                                    .setIsBrowsable(false)
+                                    .setArtworkUri(
+                                        RecitationChapterArtwork.getChapterArtworkUri(
+                                            this@RecitationService,
+                                            i
+                                        )
+                                    )
+                                    .build()
+                            )
+                            .build()
+                    )
+                }
+            }
+
+        override fun onGetItem(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            mediaId: String
+        ): ListenableFuture<LibraryResult<MediaItem>> {
+            return Futures.immediateFuture(LibraryResult.ofError(LibraryResult.RESULT_ERROR_NOT_SUPPORTED))
+        }
+
+        override fun onAddMediaItems(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            mediaItems: MutableList<MediaItem>
+        ): ListenableFuture<List<MediaItem>> {
+            val autoItems = mediaItems.filter { it.mediaId.startsWith("auto_chapter_") }
+
+            if (autoItems.isNotEmpty()) {
+                val item = autoItems.first()
+                val id = item.mediaId
+
+                serviceScope.launch {
+                    val chapterStr = if (id.contains("_reciter_")) {
+                        val parts = id.removePrefix("auto_chapter_").split("_reciter_")
+                        val chapterNo = parts[0].toIntOrNull()
+                        val reciterId = parts.getOrNull(1)
+
+                        if (reciterId != null) {
+                            RecitationPreferences.setReciterId(reciterId)
+                            RecitationPreferences.setAudioOption(AudioOption.ONLY_QURAN)
+
+                            updateState {
+                                copy(
+                                    settings = settings.copy(
+                                        reciter = reciterId,
+                                        audioOption = AudioOption.ONLY_QURAN
+                                    )
+                                )
+                            }
+                        }
+
+                        chapterNo
+                    } else {
+                        id.removePrefix("auto_chapter_").toIntOrNull()
+                    }
+
+                    if (chapterStr != null) {
+                        playVerse(chapterStr, 1)
+                    }
+                }
+
+                return Futures.immediateFuture(emptyList())
+            }
+
+            return super.onAddMediaItems(mediaSession, controller, mediaItems)
         }
     }
 
@@ -1158,6 +1338,7 @@ class RecitationService : MediaSessionService() {
             is SetAudioOptionCommand -> {
                 updateState { copy(settings = settings.copy(audioOption = cmd.audioOption)) }
                 invalidateChapterPlayback()
+                refreshLibrary()
             }
 
             is SetVerseGroupSizeCommand -> {
@@ -1200,7 +1381,9 @@ class RecitationService : MediaSessionService() {
                         )
                     )
                 }
+
                 invalidateChapterPlayback()
+                refreshLibrary()
             }
         }
     }

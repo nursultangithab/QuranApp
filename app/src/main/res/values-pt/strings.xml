@@ -94,6 +94,7 @@
     <string name="strLabelSelectTranslation">Selecionar tradução</string>
     <string name="strLabelIncludeArabic">Incluir árabe</string>
     <string name="strLabelIncludeFootnotes">Incluir notas de rodapé</string>
+    <string name="includeBookmarkNote">Incluir nota do marcador (se houver)</string>
     <string name="strLabelQuickLinks">Links rápidos</string>
     <string name="strMsgBookmarkAddedAlready">O versículo já foi adicionado aos favoritos</string>
     <string name="strMsgBookmarkRemoved">Versículo removido dos favoritos com sucesso</string>
@@ -441,4 +442,5 @@
     <string name="thematicTopics">Tópicos por tema</string>
     <string name="englishContentOnly">O conteúdo desta página está disponível apenas em inglês.</string>
     <string name="estimatedSize">Tamanho estimado: %s</string>
+    <string name="msgPreparingPrebuiltAtlas">Preparando o texto do Alcorão pela primeira vez. Isso levará alguns segundos.</string>
 </resources>

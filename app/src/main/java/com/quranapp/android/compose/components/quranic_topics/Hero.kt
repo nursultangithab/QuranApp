@@ -36,7 +36,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.alfaazplus.sunnah.ui.theme.fontArabic
+import com.quranapp.android.compose.theme.fontArabic
 import com.quranapp.android.R
 import com.quranapp.android.api.resolveInventoryUrl
 import com.quranapp.android.compose.components.reader.dialogs.QuickReference
@@ -68,7 +68,7 @@ internal fun TopicHeroCard(
     var quickRefData by remember { mutableStateOf<QuickReferenceData?>(null) }
 
     val heroImageData = remember(topic.imageUrl, downloadSource) {
-        topic.imageUrl?.let(::resolveInventoryUrl) ?: R.drawable.topic_thumbnail
+        topic.imageUrl?.let(::resolveInventoryUrl) ?: R.drawable.quran_wallpaper
     }
 
     val heroImageModel = remember(heroImageData, context) {

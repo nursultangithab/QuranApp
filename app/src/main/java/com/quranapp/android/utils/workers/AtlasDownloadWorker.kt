@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.room.withTransaction
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkManager
@@ -16,35 +15,20 @@ import com.quranapp.android.R
 import com.quranapp.android.activities.ActivitySettings
 import com.quranapp.android.compose.navigation.SettingRoutes
 import com.quranapp.android.db.DatabaseProvider
-import com.quranapp.android.db.ExternalQuranDatabase
-import com.quranapp.android.db.entities.atlas.AtlasBundleEntity
-import com.quranapp.android.db.entities.atlas.AtlasWordShapeEntity
+import com.quranapp.android.utils.Log
 import com.quranapp.android.utils.app.NotificationUtils
 import com.quranapp.android.utils.app.NotificationUtils.createForegroundInfoFallback
-import com.quranapp.android.utils.reader.atlas.AtlasGlyphPlacement
-import com.quranapp.android.utils.reader.atlas.AtlasLayerJson
 import com.quranapp.android.utils.reader.atlas.AtlasManager
-import com.quranapp.android.utils.reader.atlas.AtlasMetaRoot
-import com.quranapp.android.utils.reader.atlas.atlasJson
-import com.quranapp.android.utils.reader.atlas.atlasPlacementListSerializer
+import com.quranapp.android.utils.reader.toAtlasBundleDownloadKey
 import com.quranapp.android.utils.univ.Keys
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.BufferedInputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.io.IOException
-import java.util.zip.ZipInputStream
 
 class AtlasDownloadWorker(
     private val ctx: Context,
     params: WorkerParameters,
 ) : CoroutineWorker(ctx, params) {
-    companion object {
-        private const val INSERT_CHUNK = 500
-    }
-
     override suspend fun getForegroundInfo(): ForegroundInfo {
         val scriptKey = inputData.getString("scriptKey") ?: return createForegroundInfoFallback(ctx)
 
@@ -82,7 +66,7 @@ class AtlasDownloadWorker(
 
         try {
             downloadGithubRawContentToFile(
-                url = "ghraw://AlfaazPlus/QuranAppInventory/master/atlas/$scriptKey/${densityLevel}x.zip",
+                url = "ghraw://AlfaazPlus/QuranAppInventory/master/atlas/${scriptKey.toAtlasBundleDownloadKey()}/${densityLevel}x.zip",
                 dest = tmpFile,
             ) { progress ->
                 if (!isStopped) {
@@ -92,7 +76,9 @@ class AtlasDownloadWorker(
             }
 
             val db = DatabaseProvider.getExternalQuranDatabase(ctx)
-            importFromZipFile(tmpFile, scriptKey, db)
+            AtlasManager.importAtlasFromZip(ctx, tmpFile, scriptKey, db)
+        } catch (e: Exception) {
+            Log.saveError(e, "AtlasDownloadWorker.downloadAndStore")
         } finally {
             if (tmpFile.exists()) {
                 tmpFile.delete()
@@ -131,8 +117,8 @@ class AtlasDownloadWorker(
                 scriptKey.hashCode(),
                 activityIntent,
                 flag,
-            ),
-        )
+                ),
+            )
 
         builder.addAction(
             R.drawable.dr_icon_close,
@@ -145,108 +131,5 @@ class AtlasDownloadWorker(
             builder.build(),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
         )
-    }
-
-    private suspend fun importFromZipFile(
-        file: File,
-        bundleKey: String,
-        db: ExternalQuranDatabase
-    ) {
-        val files = readZipEntries(
-            file, setOf(
-                "meta.json",
-                "atlas.json",
-                "atlas.png",
-                "words.json",
-            )
-        )
-
-        val metaBytes = files["meta.json"] ?: error("atlas zip missing meta.json")
-        val layerBytes = files["atlas.json"] ?: error("atlas zip missing atlas.json")
-        val pngBytes = files["atlas.png"] ?: error("atlas zip missing atlas.png")
-        val wordsBytes = files["words.json"] ?: error("atlas zip missing words.json")
-
-        val metaJson = metaBytes.decodeToString()
-        val layerJson = layerBytes.decodeToString()
-        val wordsJson = wordsBytes.decodeToString()
-
-        // verify
-        atlasJson.decodeFromString<AtlasMetaRoot>(metaJson)
-        atlasJson.decodeFromString<AtlasLayerJson>(layerJson)
-
-
-        val words = atlasJson.decodeFromString<Map<String, List<AtlasGlyphPlacement>>>(
-            wordsJson
-        )
-
-        val dao = db.atlasWordShapeDao()
-        val pngFile = AtlasManager.getBundlePngFile(ctx, bundleKey)
-        FileOutputStream(pngFile).use { it.write(pngBytes) }
-
-        db.withTransaction {
-            dao.deleteShapesForBundle(bundleKey)
-
-            for (chunk in words.entries.chunked(INSERT_CHUNK)) {
-                val rows = chunk.map { (word, placements) ->
-                    AtlasWordShapeEntity(
-                        bundleKey = bundleKey,
-                        word = word,
-                        placementsJson = atlasJson.encodeToString(
-                            atlasPlacementListSerializer,
-                            placements
-                        ),
-                    )
-                }
-
-                dao.insertShapes(rows)
-            }
-
-            dao.upsertBundle(
-                AtlasBundleEntity(
-                    bundleKey = bundleKey,
-                    metaJson = metaJson,
-                    layerJson = layerJson,
-                ),
-            )
-        }
-    }
-
-    private fun readZipEntries(file: File, entryNames: Set<String>): Map<String, ByteArray> {
-        FileInputStream(file).use { raw ->
-            val wanted = entryNames.map { normalizeZipPath(it) }.toSet()
-
-            val out = LinkedHashMap<String, ByteArray>()
-
-            val skipBuf = ByteArray(8192)
-
-            BufferedInputStream(raw).use { buffered ->
-                ZipInputStream(buffered).use { zis ->
-                    while (true) {
-                        val entry = zis.nextEntry ?: break
-
-                        try {
-                            if (entry.isDirectory) continue
-
-                            val name = normalizeZipPath(entry.name)
-
-                            if (name in wanted) {
-                                out[name] = zis.readBytes()
-                            } else {
-                                while (zis.read(skipBuf) != -1) {
-                                }
-                            }
-                        } finally {
-                            zis.closeEntry()
-                        }
-                    }
-                }
-            }
-
-            return out
-        }
-    }
-
-    private fun normalizeZipPath(path: String): String {
-        return path.trimStart('/').replace('\\', '/')
     }
 }

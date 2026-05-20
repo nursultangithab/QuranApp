@@ -46,7 +46,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.alfaazplus.sunnah.ui.theme.tightTextStyle
+import com.quranapp.android.compose.theme.tightTextStyle
 import com.quranapp.android.R
 import com.quranapp.android.components.quran.subcomponents.Translation
 import com.quranapp.android.compose.components.reader.LocalReaderViewModel
@@ -169,7 +169,7 @@ fun SimilarVersesSheet(
                         surahNo = ayah.surahNo,
                         verseNo = ayah.ayahNo,
                         words = vwd.words,
-                        atlasPlacements = atlasBundle?.getPlacementsForWords(vwd.words)
+                        atlasPlacements = atlasBundle?.getPlacementsForWords(vwd.words, vwd.pageNo)
                             ?: emptyMap(),
                         translation = translation,
                         highlightWordIndices = highlights,

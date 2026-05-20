@@ -104,6 +104,7 @@
     <string name="strMsgBookmarkDate" formatted="false">%2$s પર %1$s</string>
     <string name="strLabelVerseRange">આયત શ્રેણી</string>
     <string name="strLabelIncludeFootnotes">પાદટીપ શામેલ કરો</string>
+    <string name="includeBookmarkNote">બુકમાર્ક નોંધ ઉમેરો (જો હોય તો)</string>
     <string name="strLabelSelectTranslations">અનુવાદો પસંદ કરો</string>
     <string name="strLabelQuickLinks">ઝડપી સંપર્ક</string>
     <string name="strHintSearchProphet">પ્રોફેટ શોધો</string>
@@ -441,4 +442,5 @@
     <string name="thematicTopics">થીમ મુજબ વિષયો</string>
     <string name="englishContentOnly">આ પેજનું સામગ્રી માત્ર અંગ્રેજી ભાષામાં ઉપલબ્ધ છે.</string>
     <string name="estimatedSize">અંદાજિત કદ: %s</string>
+    <string name="msgPreparingPrebuiltAtlas">પ્રથમ વખત કુરાનનું લખાણ તૈયાર કરવામાં આવી રહ્યું છે. તેમાં થોડા સેકન્ડ લાગી શકે છે.</string>
 </resources>

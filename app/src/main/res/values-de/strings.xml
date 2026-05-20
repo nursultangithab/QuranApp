@@ -110,6 +110,7 @@
     <string name="strLabelWhatsappStyling">WhatsApp-Styling</string>
     <string name="strLabelIncludeArabic">Arabisch einschließen</string>
     <string name="strLabelIncludeFootnotes">Fußnoten einschließen</string>
+    <string name="includeBookmarkNote">Lesezeichennotiz einschließen (falls vorhanden)</string>
     <string name="strLabelQuickLinks">Weiterführende Links</string>
     <string name="strLabelLater">Später</string>
     <string name="strHintSearch">Suche</string>
@@ -441,4 +442,5 @@
     <string name="thematicTopics">Themen nach Kategorie</string>
     <string name="englishContentOnly">Die Inhalte auf dieser Seite sind nur auf Englisch verfügbar.</string>
     <string name="estimatedSize">Geschätzte Größe: %s</string>
+    <string name="msgPreparingPrebuiltAtlas">Das Quran-Skript wird zum ersten Mal vorbereitet. Dies dauert nur ein paar Sekunden.</string>
 </resources>

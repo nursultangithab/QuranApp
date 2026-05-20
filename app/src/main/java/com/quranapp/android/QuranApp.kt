@@ -5,8 +5,8 @@ import android.content.Context
 import android.os.Build
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatDelegate
-import com.alfaazplus.sunnah.ui.utils.shared_preference.DataStoreManager
 import com.quranapp.android.compose.utils.ThemeUtils
+import com.quranapp.android.compose.utils.preferences.DataStoreManager
 import com.quranapp.android.compose.utils.preferences.ReaderPreferences
 import com.quranapp.android.compose.utils.refreshAppLocale
 import com.quranapp.android.db.DatabaseProvider
@@ -19,6 +19,7 @@ import com.quranapp.android.utils.mediaplayer.RecitationModelManager
 import com.quranapp.android.utils.mediaplayer.WbwAudioRepository
 import com.quranapp.android.utils.univ.FileUtils
 import com.quranapp.android.viewModels.ReaderIndexViewModel
+import com.quranapp.android.views.player.startRecitationPlayerWidgetObserver
 import com.quranapp.android.views.reader.startVotdWidgetPreferenceObserver
 
 class QuranApp : Application() {
@@ -43,6 +44,7 @@ class QuranApp : Application() {
         NotificationUtils.createNotificationChannels(this)
         updateTheme()
         startVotdWidgetPreferenceObserver(this)
+        startRecitationPlayerWidgetObserver(this)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             val process = getProcessName()
